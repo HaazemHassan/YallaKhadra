@@ -1,18 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
 using YallaKhadra.Core.Abstracts.InfrastructureAbstracts;
+using YallaKhadra.Infrastructure.Data;
 
-namespace YallaKhadra.Infrastructure.Data;
+namespace YallaKhadra.Infrastructure.Repositories;
 
 public class UnitOfWork : IUnitOfWork {
     private readonly AppDbContext _context;
     private IDbContextTransaction? _transaction;
 
-    //public IGenericRepository<User> Users { get; }
 
     public UnitOfWork(AppDbContext context) {
         _context = context;
-
-        //Users = new GenericRepository<User>(_context);
     }
 
     public async Task<int> SaveChangesAsync() {

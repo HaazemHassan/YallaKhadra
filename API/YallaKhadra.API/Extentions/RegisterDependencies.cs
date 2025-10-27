@@ -95,7 +95,6 @@ namespace YallaKhadra.API.Extentions {
 
                 options.EnableAnnotations();
 
-                // Include XML comments for Swagger documentation
                 var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 if (File.Exists(xmlPath)) {
@@ -197,8 +196,8 @@ namespace YallaKhadra.API.Extentions {
                         var policyName = rateLimiterAttribute?.PolicyName;
 
                         retryAfterSeconds = policyName switch {
-                            "loginLimiter" => 60,  // 1 minute
-                            "defaultLimiter" => 60, // 1 minute
+                            "loginLimiter" => 60,
+                            "defaultLimiter" => 60,
                             _ => 60
                         };
                     }

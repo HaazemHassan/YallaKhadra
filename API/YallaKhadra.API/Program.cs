@@ -4,6 +4,7 @@ using Microsoft.OpenApi;
 using YallaKhadra.API.Bases.DataSeeding;
 using YallaKhadra.API.Extentions;
 using YallaKhadra.Core.Entities.IdentityEntities;
+using YallaKhadra.Core.Middlewares;
 
 
 namespace YallaKhadra.API {
@@ -37,11 +38,13 @@ namespace YallaKhadra.API {
                 app.UseSwaggerUI();
             }
 
+            app.UseErrorHandling();
+            app.UseForwardedHeaders();   // Use Forwarded Headers (must be early in pipeline)
+            app.UseSecurityHeaders();
             app.UseHttpsRedirection();
-
+            app.UseAuthentication();
             app.UseAuthorization();
-
-
+            app.UseRateLimiter();    //must be after UseAuthentication and UseAuthorization be cause we are using user identity name in rate limiting policy                                
             app.MapControllers();
 
             app.Run();
