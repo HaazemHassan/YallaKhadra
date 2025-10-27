@@ -1,0 +1,11 @@
+[
+  {
+    "UserName": "superadmin",
+    "Email": "superadmin@project.com",
+    "FirstName": "superadmin",
+    "LastName": "superadmin",
+    "Country": "Egypt",
+    "EmailConfirmed": true,
+    "PhoneNumberConfirmed": true
+  }
+]
