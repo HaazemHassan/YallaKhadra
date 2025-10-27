@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-namespace YallaKhadra.Core.Filters {
+namespace YallaKhadra.API.Filters {
 
 
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]

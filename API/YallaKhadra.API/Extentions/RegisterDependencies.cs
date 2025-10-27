@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.RateLimiting;
 using YallaKhadra.API.Services;
@@ -15,6 +15,8 @@ using YallaKhadra.Services;
 
 namespace YallaKhadra.API.Extentions {
     public static class RegisterDependencies {
+        private const string GuestIdKey = "GuestId";   // used for ratelimiting
+
         public static IServiceCollection DependenciesRegistration(this IServiceCollection services, IConfiguration configuration) {
             //API Layer Dependency Registrations
             services.AddTransient<ICurrentUserService, CurrentUserService>();
@@ -147,19 +149,23 @@ namespace YallaKhadra.API.Extentions {
             return services;
         }
 
-        private static IServiceCollection RateLimitingDependencyConfigurations
-            (this IServiceCollection services, IConfiguration configuration) {
+        public static IServiceCollection RateLimitingDependencyConfigurations(
+         this IServiceCollection services, IConfiguration configuration) {
+
             services.AddRateLimiter(options => {
                 options.AddPolicy("defaultLimiter", httpContext => {
-                    var clientContextService = httpContext.RequestServices.GetRequiredService<IClientContextService>();
-                    var user = httpContext.User?.Identity?.Name;
                     string partitionKey;
-                    if (!string.IsNullOrEmpty(user)) {
+                    var user = httpContext.User?.Identity?.Name;
+
+                    if (!string.IsNullOrEmpty(user))
                         partitionKey = user;
-                    }
-                    else {
-                        partitionKey = clientContextService.GetClientIpAddress(httpContext);
-                    }
+
+                    else if (httpContext.Items.TryGetValue(GuestIdKey, out var guestId) && guestId is string guestIdString)
+                        partitionKey = guestIdString;
+
+                    else
+                        partitionKey = GetFallbackPartitionKey(httpContext);
+
 
                     return RateLimitPartition.GetSlidingWindowLimiter(partitionKey, key => new SlidingWindowRateLimiterOptions {
                         Window = TimeSpan.FromMinutes(1),
@@ -171,8 +177,14 @@ namespace YallaKhadra.API.Extentions {
                 });
 
                 options.AddPolicy("loginLimiter", httpContext => {
-                    var clientContextService = httpContext.RequestServices.GetRequiredService<IClientContextService>();
-                    var partitionKey = clientContextService.GetClientIpAddress(httpContext);
+                    string partitionKey;
+
+                    if (httpContext.Items.TryGetValue(GuestIdKey, out var guestId) && guestId is string guestIdString)
+                        partitionKey = guestIdString;
+
+                    else
+                        partitionKey = GetFallbackPartitionKey(httpContext);
+
 
                     return RateLimitPartition.GetSlidingWindowLimiter(partitionKey, key => new SlidingWindowRateLimiterOptions {
                         Window = TimeSpan.FromMinutes(1),
@@ -191,25 +203,11 @@ namespace YallaKhadra.API.Extentions {
                     context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
                     context.HttpContext.Response.ContentType = "application/json";
 
-                    // Add Retry-After header
-                    int retryAfterSeconds;
-
+                    int retryAfterSeconds = 60;
                     if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)) {
-                        retryAfterSeconds = (int)retryAfter.TotalSeconds;
-                    }
-                    else {
-                        var endpoint = context.HttpContext.GetEndpoint();
-                        var rateLimiterAttribute = endpoint?.Metadata.GetMetadata<EnableRateLimitingAttribute>();
-                        var policyName = rateLimiterAttribute?.PolicyName;
-
-                        retryAfterSeconds = policyName switch {
-                            "loginLimiter" => 60,
-                            "defaultLimiter" => 60,
-                            _ => 60
-                        };
+                        retryAfterSeconds = (int)Math.Ceiling(retryAfter.TotalSeconds);
                     }
                     context.HttpContext.Response.Headers.RetryAfter = retryAfterSeconds.ToString();
-
 
                     var response = new Response<string> {
                         StatusCode = HttpStatusCode.TooManyRequests,
@@ -222,7 +220,22 @@ namespace YallaKhadra.API.Extentions {
 
                 options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             });
+
             return services;
+
+            string GetFallbackPartitionKey(HttpContext httpContext) {
+                var clientContextService = httpContext.RequestServices.GetRequiredService<IClientContextService>();
+                var ip = clientContextService.GetClientIpAddress(httpContext);
+                var userAgent = httpContext.Request.Headers["User-Agent"].FirstOrDefault() ?? "unknown";
+
+                var identifier = $"{ip}-{userAgent}";
+                using (var sha256 = SHA256.Create()) {
+                    var bytes = Encoding.UTF8.GetBytes(identifier);
+                    var hash = sha256.ComputeHash(bytes);
+                    return Convert.ToBase64String(hash);
+                }
+            }
         }
+
     }
 }

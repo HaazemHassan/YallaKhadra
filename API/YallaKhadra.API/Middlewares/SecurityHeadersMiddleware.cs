@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
 
-namespace YallaKhadra.Core.Middlewares {
+namespace YallaKhadra.API.Middlewares {
     /// <summary>
     /// Middleware to add security headers to all HTTP responses
     /// Protects against common web vulnerabilities

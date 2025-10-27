@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -6,7 +6,7 @@ using System.Net;
 using System.Text.Json;
 using YallaKhadra.Core.Bases.Responses;
 
-namespace YallaKhadra.Core.Middlewares {
+namespace YallaKhadra.API.Middlewares {
     public class ErrorHandlingMiddleware {
         private readonly RequestDelegate _next;
 
