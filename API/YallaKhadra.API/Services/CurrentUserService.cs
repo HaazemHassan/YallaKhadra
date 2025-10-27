@@ -1,10 +1,9 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
-using YallaKhadra.Core.Abstracts.ServicesContracts;
+using YallaKhadra.Core.Abstracts.ApiAbstracts;
 using YallaKhadra.Core.Entities.IdentityEntities;
 
-namespace YallaKhadra.Services.Services {
+namespace YallaKhadra.API.Services {
     public class CurrentUserService : ICurrentUserService {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly UserManager<ApplicationUser> _userManager;

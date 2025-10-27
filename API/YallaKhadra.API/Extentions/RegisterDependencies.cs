@@ -5,17 +5,22 @@ using Microsoft.OpenApi.Models;
 using System.Net;
 using System.Text;
 using System.Threading.RateLimiting;
+using YallaKhadra.API.Services;
 using YallaKhadra.Core;
+using YallaKhadra.Core.Abstracts.ApiAbstracts;
 using YallaKhadra.Core.Bases.Authentication;
 using YallaKhadra.Core.Bases.Responses;
-using YallaKhadra.Core.Helpers;
 using YallaKhadra.Infrastructure;
 using YallaKhadra.Services;
 
 namespace YallaKhadra.API.Extentions {
     public static class RegisterDependencies {
         public static IServiceCollection DependenciesRegistration(this IServiceCollection services, IConfiguration configuration) {
-            //Layers Dependency Registrations
+            //API Layer Dependency Registrations
+            services.AddTransient<ICurrentUserService, CurrentUserService>();
+            services.AddTransient<IClientContextService, ClientContextService>();
+
+            //Other Layers Dependency Registrations
             services.InfrastrctureLayerDepenedencyRegistration(configuration);
             services.ServiceLayerDependencyRegistration(configuration);
             services.CoreLayerDependencyRegistration(configuration);
@@ -146,13 +151,14 @@ namespace YallaKhadra.API.Extentions {
             (this IServiceCollection services, IConfiguration configuration) {
             services.AddRateLimiter(options => {
                 options.AddPolicy("defaultLimiter", httpContext => {
+                    var clientContextService = httpContext.RequestServices.GetRequiredService<IClientContextService>();
                     var user = httpContext.User?.Identity?.Name;
                     string partitionKey;
                     if (!string.IsNullOrEmpty(user)) {
                         partitionKey = user;
                     }
                     else {
-                        partitionKey = HttpContextHelper.GetClientIpAddress(httpContext);
+                        partitionKey = clientContextService.GetClientIpAddress(httpContext);
                     }
 
                     return RateLimitPartition.GetSlidingWindowLimiter(partitionKey, key => new SlidingWindowRateLimiterOptions {
@@ -165,7 +171,8 @@ namespace YallaKhadra.API.Extentions {
                 });
 
                 options.AddPolicy("loginLimiter", httpContext => {
-                    var partitionKey = HttpContextHelper.GetClientIpAddress(httpContext);
+                    var clientContextService = httpContext.RequestServices.GetRequiredService<IClientContextService>();
+                    var partitionKey = clientContextService.GetClientIpAddress(httpContext);
 
                     return RateLimitPartition.GetSlidingWindowLimiter(partitionKey, key => new SlidingWindowRateLimiterOptions {
                         Window = TimeSpan.FromMinutes(1),

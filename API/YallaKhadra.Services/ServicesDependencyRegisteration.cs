@@ -8,7 +8,6 @@ namespace YallaKhadra.Services {
         public static IServiceCollection ServiceLayerDependencyRegistration(this IServiceCollection services, IConfiguration configuration) {
             services.AddTransient<IApplicationUserService, ApplicationUserService>();
             services.AddTransient<IAuthenticationService, AuthenticationService>();
-            services.AddTransient<ICurrentUserService, CurrentUserService>();
 
             return services;
         }

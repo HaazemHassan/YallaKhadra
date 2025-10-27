@@ -1,19 +1,14 @@
-using Microsoft.AspNetCore.Http;
-using System.Net;
+﻿using System.Net;
+using YallaKhadra.Core.Abstracts.ApiAbstracts;
 
-namespace YallaKhadra.Core.Helpers {
-    /// <summary>
-    /// Helper class for HttpContext operations
-    /// </summary>
-    public static class HttpContextHelper {
+namespace YallaKhadra.API.Services {
+    public class ClientContextService : IClientContextService {
 
-
-        /// <summary>
-        /// Gets the real client IP address, considering proxy/load balancer headers
-        /// </summary>
-        /// <returns>The client IP address as string</returns>
-        public static string GetClientIpAddress(HttpContext context) {
-            // Check X-Forwarded-For header (set by proxies/load balancers)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public ClientContextService(IHttpContextAccessor httpContextAccessor) {
+            _httpContextAccessor = httpContextAccessor;
+        }
+        public string GetClientIpAddress(HttpContext context) {
             var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
             if (!string.IsNullOrEmpty(forwardedFor)) {
                 var ips = forwardedFor.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -35,6 +30,10 @@ namespace YallaKhadra.Core.Helpers {
             return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         }
 
+        public bool IsWebClient() {
+            var request = _httpContextAccessor.HttpContext?.Request;
+            return request is not null ? request.Headers.TryGetValue("X-Client-Type", out var headerValue) && headerValue == "Web" : false;
 
+        }
     }
 }

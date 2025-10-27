@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using YallaKhadra.API.Bases;
+using YallaKhadra.Core.Abstracts.ApiAbstracts;
 using YallaKhadra.Core.Bases.Authentication;
 using YallaKhadra.Core.Bases.Responses;
 using YallaKhadra.Core.Features.Authentication.Commands.RequestsModels;
@@ -16,9 +17,11 @@ namespace YallaKhadra.Controllers {
     [Produces("application/json")]
     public class AuthenticationController : BaseController {
         private readonly JwtSettings _jwtSettings;
+        private readonly IClientContextService _clientContextService;
 
-        public AuthenticationController(IMediator mediator, JwtSettings jwtSettings) : base(mediator) {
+        public AuthenticationController(IMediator mediator, JwtSettings jwtSettings, IClientContextService clientContextService) : base(mediator) {
             _jwtSettings = jwtSettings;
+            _clientContextService = clientContextService;
         }
 
         /// <summary>
@@ -94,7 +97,7 @@ namespace YallaKhadra.Controllers {
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command) {
-            if (!IsWebClient())
+            if (!_clientContextService.IsWebClient())
                 command.RefreshToken = Request.Cookies["refreshToken"];
             else if (command.RefreshToken is null)
                 return Unauthorized("Refresh token is required for mobile clients");
@@ -186,7 +189,7 @@ namespace YallaKhadra.Controllers {
 
             var refreshToken = result.Data.RefreshToken.Token;
 
-            if (IsWebClient()) {
+            if (_clientContextService.IsWebClient()) {
                 var cookieOptions = new CookieOptions {
                     HttpOnly = true,
                     Secure = true,

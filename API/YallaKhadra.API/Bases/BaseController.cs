@@ -41,8 +41,6 @@ namespace YallaKhadra.API.Bases {
 
 
         }
-        protected bool IsWebClient() {
-            return Request.Headers.TryGetValue("X-Client-Type", out var headerValue) && headerValue == "Web";
-        }
+
     }
 }

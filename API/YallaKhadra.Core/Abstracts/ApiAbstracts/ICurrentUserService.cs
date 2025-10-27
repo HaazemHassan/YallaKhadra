@@ -1,6 +1,6 @@
 using YallaKhadra.Core.Entities.IdentityEntities;
 
-namespace YallaKhadra.Core.Abstracts.ServicesContracts;
+namespace YallaKhadra.Core.Abstracts.ApiAbstracts;
 
 public interface ICurrentUserService {
     Guid? UserId { get; }
