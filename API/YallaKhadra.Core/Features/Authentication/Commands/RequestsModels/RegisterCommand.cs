@@ -3,7 +3,7 @@ using YallaKhadra.Core.Bases.Authentication;
 using YallaKhadra.Core.Bases.Responses;
 
 namespace YallaKhadra.Core.Features.Authentication.Commands.RequestsModels {
-    public class RegisterCommand : IRequest<Response<JwtResult>> {
+    public class RegisterCommand : IRequest<Response<AuthResult>> {
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string UserName { get; set; }

@@ -17,7 +17,7 @@ namespace YallaKhadra.API.Bases {
 
         }
 
-        public IActionResult NewResult<T>(Response<T> response) {
+        protected IActionResult NewResult<T>(Response<T> response) {
             switch (response.StatusCode) {
                 case HttpStatusCode.OK:
                 return new OkObjectResult(response);
@@ -40,6 +40,9 @@ namespace YallaKhadra.API.Bases {
             }
 
 
+        }
+        protected bool IsWebClient() {
+            return Request.Headers.TryGetValue("X-Client-Type", out var headerValue) && headerValue == "Web";
         }
     }
 }

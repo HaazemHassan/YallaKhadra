@@ -37,37 +37,37 @@ namespace YallaKhadra.Services.Services {
         }
 
 
-        public async Task<ServiceOperationResult<JwtResult?>> AuthenticateAsync(ApplicationUser user, DateTime? refreshTokenExpDate) {
+        public async Task<ServiceOperationResult<AuthResult?>> AuthenticateAsync(ApplicationUser user, DateTime? refreshTokenExpDate) {
             if (user is null)
-                return ServiceOperationResult<JwtResult?>.Failure(ServiceOperationStatus.InvalidParameters, "User cannot be null");
+                return ServiceOperationResult<AuthResult?>.Failure(ServiceOperationStatus.InvalidParameters, "User cannot be null");
 
             var jwtSecurityToken = await GenerateAccessToken(user);
             var refreshToken = GenerateRefreshToken(user.Id, refreshTokenExpDate);
             await AddRefreshTokenToDatabase(refreshToken, jwtSecurityToken.Id);
 
-            JwtResult jwtResult = new JwtResult {
+            AuthResult jwtResult = new AuthResult {
                 AccessToken = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken),
                 RefreshToken = refreshToken
             };
-            return ServiceOperationResult<JwtResult?>.Success(jwtResult);
+            return ServiceOperationResult<AuthResult?>.Success(jwtResult);
         }
 
-        public async Task<ServiceOperationResult<JwtResult?>> ReAuthenticateAsync(string refreshToken, string accessToken) {
+        public async Task<ServiceOperationResult<AuthResult?>> ReAuthenticateAsync(string refreshToken, string accessToken) {
             var isValidAccessToken = ValidateAccessToken(accessToken, validateLifetime: false);
             if (!isValidAccessToken)
-                return ServiceOperationResult<JwtResult?>.Failure(ServiceOperationStatus.Unauthorized, "Invalid access token");
+                return ServiceOperationResult<AuthResult?>.Failure(ServiceOperationStatus.Unauthorized, "Invalid access token");
 
             var jwt = ReadJWT(accessToken);
             if (jwt is null)
-                return ServiceOperationResult<JwtResult?>.Failure(ServiceOperationStatus.Unauthorized, "Can't read this token");
+                return ServiceOperationResult<AuthResult?>.Failure(ServiceOperationStatus.Unauthorized, "Can't read this token");
 
             var userId = jwt.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
             if (userId is null)
-                return ServiceOperationResult<JwtResult?>.Failure(ServiceOperationStatus.Unauthorized, "User id is null");
+                return ServiceOperationResult<AuthResult?>.Failure(ServiceOperationStatus.Unauthorized, "User id is null");
 
             var user = await _userManager.FindByIdAsync(userId);
             if (user is null)
-                return ServiceOperationResult<JwtResult?>.Failure(ServiceOperationStatus.Unauthorized, "User is not found");
+                return ServiceOperationResult<AuthResult?>.Failure(ServiceOperationStatus.Unauthorized, "User is not found");
 
             var currentRefreshToken = await _refreshTokenRepository.GetTableNoTracking()
                                              .FirstOrDefaultAsync(x => x.AccessTokenJTI == jwt.Id &&
@@ -75,12 +75,12 @@ namespace YallaKhadra.Services.Services {
                                                                      x.UserId == Guid.Parse(userId));
 
             if (currentRefreshToken is null || !currentRefreshToken.IsActive)
-                return ServiceOperationResult<JwtResult?>.Failure(ServiceOperationStatus.Unauthorized, "Refresh token is not valid");
+                return ServiceOperationResult<AuthResult?>.Failure(ServiceOperationStatus.Unauthorized, "Refresh token is not valid");
 
             //new jwt result
             var jwtResultOperation = await AuthenticateAsync(user, currentRefreshToken.Expires);
             if (jwtResultOperation.Status != ServiceOperationStatus.Succeeded || jwtResultOperation.Data is null)
-                return ServiceOperationResult<JwtResult?>.Failure(ServiceOperationStatus.Failed, "Failed to generate new token");
+                return ServiceOperationResult<AuthResult?>.Failure(ServiceOperationStatus.Failed, "Failed to generate new token");
 
             currentRefreshToken.RevokationDate = DateTime.UtcNow;
             await _refreshTokenRepository.UpdateAsync(currentRefreshToken);
@@ -301,7 +301,7 @@ namespace YallaKhadra.Services.Services {
             return response;
         }
 
-        private async Task<JwtResult?> GeneratePasswordResetToken(ApplicationUser user) {
+        private async Task<AuthResult?> GeneratePasswordResetToken(ApplicationUser user) {
             if (user is null)
                 return null;
 
@@ -309,13 +309,13 @@ namespace YallaKhadra.Services.Services {
             userClaims.Add(new Claim("purpose", "reset-password"));
             var jwtSecurityToken = await GenerateAccessToken(user, userClaims, DateTime.UtcNow.AddMinutes(5));
 
-            JwtResult jwtResult = new JwtResult {
+            AuthResult jwtResult = new AuthResult {
                 AccessToken = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken),
             };
             return jwtResult;
         }
 
-        public Task<ServiceOperationResult<JwtResult?>> GoogleAuthenticateAsync(string idToken) {
+        public Task<ServiceOperationResult<AuthResult?>> GoogleAuthenticateAsync(string idToken) {
             throw new NotImplementedException();
         }
 

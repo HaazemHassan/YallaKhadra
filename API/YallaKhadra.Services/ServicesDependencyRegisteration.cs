@@ -9,7 +9,6 @@ namespace YallaKhadra.Services {
             services.AddTransient<IApplicationUserService, ApplicationUserService>();
             services.AddTransient<IAuthenticationService, AuthenticationService>();
             services.AddTransient<ICurrentUserService, CurrentUserService>();
-            services.AddTransient<ITokenService, TokenService>();
 
             return services;
         }

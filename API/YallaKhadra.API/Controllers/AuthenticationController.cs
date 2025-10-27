@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using YallaKhadra.API.Bases;
-using YallaKhadra.Core.Abstracts.ServicesContracts;
 using YallaKhadra.Core.Bases.Authentication;
 using YallaKhadra.Core.Bases.Responses;
 using YallaKhadra.Core.Features.Authentication.Commands.RequestsModels;
@@ -16,10 +15,10 @@ namespace YallaKhadra.Controllers {
     [ApiController]
     [Produces("application/json")]
     public class AuthenticationController : BaseController {
-        private readonly ITokenService _tokenService;
+        private readonly JwtSettings _jwtSettings;
 
-        public AuthenticationController(IMediator mediator, ITokenService tokenService) : base(mediator) {
-            _tokenService = tokenService;
+        public AuthenticationController(IMediator mediator, JwtSettings jwtSettings) : base(mediator) {
+            _jwtSettings = jwtSettings;
         }
 
         /// <summary>
@@ -38,19 +37,13 @@ namespace YallaKhadra.Controllers {
         [HttpPost("login")]
         [AnonymousOnly]
         [EnableRateLimiting("loginLimiter")]
-        [ProducesResponseType(typeof(Response<JwtResult>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Response<AuthResult>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
         public async Task<IActionResult> Login([FromBody] SignInCommand command) {
             var result = await mediator.Send(command);
-            if (result.Succeeded && result.Data is not null) {
-                var refreshtoken = result.Data.RefreshToken!.Token;
-                var cookieOptions = _tokenService.GetRefreshTokenCookieOptions();
-                Response.Cookies.Append("refreshToken", refreshtoken, cookieOptions);
-                result.Data.RefreshToken = null;  //must return another response model without refresh token but i will keep it null for now
-            }
-
+            HandleRefreshToken(result);
             return NewResult(result);
         }
 
@@ -72,19 +65,14 @@ namespace YallaKhadra.Controllers {
         [HttpPost("google-login")]
         [EnableRateLimiting("loginLimiter")]
         [AnonymousOnly]
-        [ProducesResponseType(typeof(Response<JwtResult>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Response<AuthResult>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
         public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginCommand command) {
             var result = await mediator.Send(command);
-            if (result.Succeeded && result.Data is not null) {
-                var refreshtoken = result.Data.RefreshToken!.Token;
-                var cookieOptions = _tokenService.GetRefreshTokenCookieOptions();
-                Response.Cookies.Append("refreshToken", refreshtoken, cookieOptions);
-                result.Data.RefreshToken = null;
-            }
+            HandleRefreshToken(result);
             return NewResult(result);
         }
 
@@ -102,18 +90,17 @@ namespace YallaKhadra.Controllers {
         /// The access token in the request body can be expired, but must be valid in format.
         /// </remarks>
         [HttpPost("refresh-token")]
-        [ProducesResponseType(typeof(Response<JwtResult>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Response<AuthResult>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command) {
-            command.RefreshToken = Request.Cookies["refreshToken"];
+            if (!IsWebClient())
+                command.RefreshToken = Request.Cookies["refreshToken"];
+            else if (command.RefreshToken is null)
+                return Unauthorized("Refresh token is required for mobile clients");
             var result = await mediator.Send(command);
-            if (result.Succeeded && result.Data is not null) {
-                var refreshtoken = result.Data.RefreshToken!.Token;
-                var cookieOptions = _tokenService.GetRefreshTokenCookieOptions();
-                Response.Cookies.Append("refreshToken", refreshtoken, cookieOptions);
-                result.Data.RefreshToken = null;
-            }
+            HandleRefreshToken(result);
+
             return NewResult(result);
         }
 
@@ -191,5 +178,29 @@ namespace YallaKhadra.Controllers {
         //    var result = await _mediator.Send(command);
         //    return NewResult(result);
         //}
+
+
+        private void HandleRefreshToken(Response<AuthResult> result) {
+            if (!result.Succeeded || result.Data?.RefreshToken is null)
+                return;
+
+            var refreshToken = result.Data.RefreshToken.Token;
+
+            if (IsWebClient()) {
+                var cookieOptions = new CookieOptions {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Path = "/api/authentication",
+                    Expires = result.Data.RefreshToken.ExpirationDate
+                };
+                Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+                result.Data.RefreshToken = null;
+            }
+        }
     }
+
+
 }
+
+

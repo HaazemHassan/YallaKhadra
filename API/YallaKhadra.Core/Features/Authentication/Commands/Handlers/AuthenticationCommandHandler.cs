@@ -12,10 +12,10 @@ using YallaKhadra.Core.Features.Users.Queries.Responses;
 
 namespace YallaKhadra.Core.Features.Authentication.Commands.Handlers;
 
-public class AuthenticationCommandHandler : ResponseHandler, IRequestHandler<RegisterCommand, Response<JwtResult>>,
-                                                         IRequestHandler<SignInCommand, Response<JwtResult>>,
-                                                         IRequestHandler<RefreshTokenCommand, Response<JwtResult>>,
-                                                         IRequestHandler<GoogleLoginCommand, Response<JwtResult>> {
+public class AuthenticationCommandHandler : ResponseHandler, IRequestHandler<RegisterCommand, Response<AuthResult>>,
+                                                         IRequestHandler<SignInCommand, Response<AuthResult>>,
+                                                         IRequestHandler<RefreshTokenCommand, Response<AuthResult>>,
+                                                         IRequestHandler<GoogleLoginCommand, Response<AuthResult>> {
 
 
     private readonly IMapper _mapper;
@@ -36,7 +36,7 @@ public class AuthenticationCommandHandler : ResponseHandler, IRequestHandler<Reg
     }
 
 
-    public async Task<Response<JwtResult>> Handle(RegisterCommand request, CancellationToken cancellationToken) {
+    public async Task<Response<AuthResult>> Handle(RegisterCommand request, CancellationToken cancellationToken) {
         await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try {
             var userMapped = _mapper.Map<ApplicationUser>(request);
@@ -45,8 +45,8 @@ public class AuthenticationCommandHandler : ResponseHandler, IRequestHandler<Reg
             if (addUserResult.Status != ServiceOperationStatus.Succeeded || addUserResult.Data is null) {
                 await _unitOfWork.RollbackAsync();
                 return addUserResult.Status switch {
-                    ServiceOperationStatus.AlreadyExists => Conflict<JwtResult>(addUserResult.ErrorMessage),
-                    _ => BadRequest<JwtResult>(addUserResult.ErrorMessage),
+                    ServiceOperationStatus.AlreadyExists => Conflict<AuthResult>(addUserResult.ErrorMessage),
+                    _ => BadRequest<AuthResult>(addUserResult.ErrorMessage),
                 };
             }
 
@@ -54,7 +54,7 @@ public class AuthenticationCommandHandler : ResponseHandler, IRequestHandler<Reg
             var authResult = await _authenticationService.AuthenticateAsync(user);
             if (authResult.Status != ServiceOperationStatus.Succeeded || authResult.Data is null) {
                 await _unitOfWork.RollbackAsync();
-                return BadRequest<JwtResult>(authResult.ErrorMessage);
+                return BadRequest<AuthResult>(authResult.ErrorMessage);
             }
 
             authResult.Data.User = _mapper.Map<GetUserByIdResponse>(user);
@@ -64,43 +64,43 @@ public class AuthenticationCommandHandler : ResponseHandler, IRequestHandler<Reg
         }
         catch (Exception ex) {
             await _unitOfWork.RollbackAsync();
-            return BadRequest<JwtResult>($"An error occurred: {ex.Message}");
+            return BadRequest<AuthResult>($"An error occurred: {ex.Message}");
         }
     }
 
-    public async Task<Response<JwtResult>> Handle(SignInCommand request, CancellationToken cancellationToken) {
+    public async Task<Response<AuthResult>> Handle(SignInCommand request, CancellationToken cancellationToken) {
         try {
             var userFromDb = await _userManager.FindByNameAsync(request.Username);
             if (userFromDb is null)
-                return Unauthorized<JwtResult>("Invalid username or password");
+                return Unauthorized<AuthResult>("Invalid username or password");
 
             bool isAuthenticated = await _userManager.CheckPasswordAsync(userFromDb, request.Password);
             if (!isAuthenticated)
-                return Unauthorized<JwtResult>("Invalid username or password");
+                return Unauthorized<AuthResult>("Invalid username or password");
 
             //if (!userFromDb.EmailConfirmed)
             //    return Unauthorized<JwtResult>("Please confirm your email first");
 
             var authResult = await _authenticationService.AuthenticateAsync(userFromDb);
             if (authResult.Status != ServiceOperationStatus.Succeeded || authResult.Data is null)
-                return BadRequest<JwtResult>(authResult.ErrorMessage ?? "Something went wrong");
+                return BadRequest<AuthResult>(authResult.ErrorMessage ?? "Something went wrong");
 
             authResult.Data.User = _mapper.Map<GetUserByIdResponse>(userFromDb);
             return Success(authResult.Data);
         }
         catch (Exception ex) {
-            return BadRequest<JwtResult>($"An error occurred: {ex.Message}");
+            return BadRequest<AuthResult>($"An error occurred: {ex.Message}");
         }
     }
 
-    public async Task<Response<JwtResult>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken) {
+    public async Task<Response<AuthResult>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken) {
         try {
             var authResult = await _authenticationService.ReAuthenticateAsync(request.RefreshToken, request.AccessToken);
 
             if (authResult.Status != ServiceOperationStatus.Succeeded || authResult.Data is null) {
                 return authResult.Status switch {
-                    ServiceOperationStatus.Unauthorized => Unauthorized<JwtResult>(authResult.ErrorMessage ?? "Invalid token"),
-                    _ => BadRequest<JwtResult>(authResult.ErrorMessage ?? "Something went wrong")
+                    ServiceOperationStatus.Unauthorized => Unauthorized<AuthResult>(authResult.ErrorMessage ?? "Invalid token"),
+                    _ => BadRequest<AuthResult>(authResult.ErrorMessage ?? "Something went wrong")
                 };
             }
 
@@ -110,27 +110,27 @@ public class AuthenticationCommandHandler : ResponseHandler, IRequestHandler<Reg
             return Success(authResult.Data);
         }
         catch (Exception ex) {
-            return BadRequest<JwtResult>($"An error occurred: {ex.Message}");
+            return BadRequest<AuthResult>($"An error occurred: {ex.Message}");
         }
     }
 
-    public async Task<Response<JwtResult>> Handle(GoogleLoginCommand request, CancellationToken cancellationToken) {
+    public async Task<Response<AuthResult>> Handle(GoogleLoginCommand request, CancellationToken cancellationToken) {
         try {
             var serviceResult = await _authenticationService.GoogleAuthenticateAsync(request.IdToken);
 
             if (serviceResult.Status != ServiceOperationStatus.Succeeded || serviceResult.Data is null) {
                 return serviceResult.Status switch {
-                    ServiceOperationStatus.Unauthorized => Unauthorized<JwtResult>(serviceResult.ErrorMessage ?? "Invalid Google token"),
-                    ServiceOperationStatus.InvalidParameters => BadRequest<JwtResult>(serviceResult.ErrorMessage ?? "Invalid parameters"),
-                    ServiceOperationStatus.Failed => BadRequest<JwtResult>(serviceResult.ErrorMessage ?? "Authentication failed"),
-                    _ => BadRequest<JwtResult>("An unexpected error occurred")
+                    ServiceOperationStatus.Unauthorized => Unauthorized<AuthResult>(serviceResult.ErrorMessage ?? "Invalid Google token"),
+                    ServiceOperationStatus.InvalidParameters => BadRequest<AuthResult>(serviceResult.ErrorMessage ?? "Invalid parameters"),
+                    ServiceOperationStatus.Failed => BadRequest<AuthResult>(serviceResult.ErrorMessage ?? "Authentication failed"),
+                    _ => BadRequest<AuthResult>("An unexpected error occurred")
                 };
             }
 
             return Success(serviceResult.Data);
         }
         catch (Exception ex) {
-            return BadRequest<JwtResult>($"An error occurred: {ex.Message}");
+            return BadRequest<AuthResult>($"An error occurred: {ex.Message}");
         }
     }
 }

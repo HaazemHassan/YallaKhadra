@@ -29,7 +29,7 @@ namespace YallaKhadra.API.Controllers {
         /// <response code="403">User is already authenticated (anonymous only endpoint)</response>
         [HttpPost("register")]
         [AnonymousOnly]
-        [ProducesResponseType(typeof(Response<JwtResult>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(Response<AuthResult>), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
