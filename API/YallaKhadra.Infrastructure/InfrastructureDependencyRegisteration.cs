@@ -9,9 +9,11 @@ using YallaKhadra.Infrastructure.Repositories;
 
 namespace YallaKhadra.Infrastructure;
 
-public static class InfrastructureDependencyRegisteration {
+public static class InfrastructureDependencyRegisteration
+{
 
-    public static IServiceCollection InfrastrctureLayerDepenedencyRegistration(this IServiceCollection services, IConfiguration configuration) {
+    public static IServiceCollection InfrastrctureLayerDepenedencyRegistration(this IServiceCollection services, IConfiguration configuration)
+    {
 
         DbContextServiceConfiguations(services, configuration);
         RepositoryServiceConfiguations(services);
@@ -21,8 +23,10 @@ public static class InfrastructureDependencyRegisteration {
     }
 
 
-    private static IServiceCollection DbContextServiceConfiguations(IServiceCollection services, IConfiguration configuration) {
-        services.AddDbContext<AppDbContext>(options => {
+    private static IServiceCollection DbContextServiceConfiguations(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddDbContext<AppDbContext>(options =>
+        {
             options.UseSqlServer(configuration["ConnectionStrings:DefaultConnection"]);
         });
 
@@ -30,9 +34,11 @@ public static class InfrastructureDependencyRegisteration {
     }
 
 
-    private static IServiceCollection IdentityServiceConfiguations(IServiceCollection services) {
+    private static IServiceCollection IdentityServiceConfiguations(IServiceCollection services)
+    {
 
-        services.AddIdentity<ApplicationUser, ApplicationRole>(option => {
+        services.AddIdentity<ApplicationUser, ApplicationRole>(option =>
+        {
             // Password settings.
             option.Password.RequireDigit = false;
             option.Password.RequireLowercase = false;
@@ -59,10 +65,13 @@ public static class InfrastructureDependencyRegisteration {
     }
 
 
-    private static IServiceCollection RepositoryServiceConfiguations(this IServiceCollection services) {
+    private static IServiceCollection RepositoryServiceConfiguations(this IServiceCollection services)
+    {
         services.AddTransient(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddTransient<IUnitOfWork, UnitOfWork>();
         services.AddTransient<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddTransient<IPhotoRepository, PhotoRepository>();
+        services.AddTransient<IReportRepository, ReportRepository>();
 
 
         //services.AddTransient<IMessageDeliveryRepository, MessageDeliveryRepository>();

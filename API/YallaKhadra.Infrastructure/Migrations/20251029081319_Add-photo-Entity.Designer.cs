@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using YallaKhadra.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using YallaKhadra.Infrastructure.Data;
 namespace YallaKhadra.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251029081319_Add-photo-Entity")]
+    partial class AddphotoEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -289,14 +292,17 @@ namespace YallaKhadra.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("UserId")
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("UserId1")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ReportId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId1");
 
                     b.ToTable("photos");
                 });
@@ -327,6 +333,7 @@ namespace YallaKhadra.Infrastructure.Migrations
                         .HasColumnType("float");
 
                     b.Property<string>("Notes")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PointsAwarded")
@@ -335,20 +342,27 @@ namespace YallaKhadra.Infrastructure.Migrations
                     b.Property<DateTime?>("ReviewedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ReviewedById")
+                    b.Property<string>("ReviewedById")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("ReviewedById1")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId1")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ReviewedById");
+                    b.HasIndex("ReviewedById1");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId1");
 
                     b.ToTable("Reports");
                 });
@@ -423,7 +437,7 @@ namespace YallaKhadra.Infrastructure.Migrations
 
                     b.HasOne("YallaKhadra.Core.Entities.IdentityEntities.ApplicationUser", "User")
                         .WithMany()
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId1");
 
                     b.Navigation("Report");
 
@@ -434,11 +448,11 @@ namespace YallaKhadra.Infrastructure.Migrations
                 {
                     b.HasOne("YallaKhadra.Core.Entities.IdentityEntities.ApplicationUser", "ReviewedBy")
                         .WithMany()
-                        .HasForeignKey("ReviewedById");
+                        .HasForeignKey("ReviewedById1");
 
                     b.HasOne("YallaKhadra.Core.Entities.IdentityEntities.ApplicationUser", "User")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("UserId1")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

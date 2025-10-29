@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using YallaKhadra.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using YallaKhadra.Infrastructure.Data;
 namespace YallaKhadra.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251029062826_Add-Report-Entity")]
+    partial class AddReportEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -267,40 +270,6 @@ namespace YallaKhadra.Infrastructure.Migrations
                     b.ToTable("RefreshToken");
                 });
 
-            modelBuilder.Entity("YallaKhadra.Core.Entities.Photo", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("PublicId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("ReportId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReportId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("photos");
-                });
-
             modelBuilder.Entity("YallaKhadra.Core.Entities.Report", b =>
                 {
                     b.Property<int>("Id")
@@ -311,6 +280,9 @@ namespace YallaKhadra.Infrastructure.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CleanedPhotoUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -327,6 +299,11 @@ namespace YallaKhadra.Infrastructure.Migrations
                         .HasColumnType("float");
 
                     b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhotoUrl")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PointsAwarded")
@@ -335,20 +312,27 @@ namespace YallaKhadra.Infrastructure.Migrations
                     b.Property<DateTime?>("ReviewedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ReviewedById")
+                    b.Property<string>("ReviewedById")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("ReviewedById1")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId1")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ReviewedById");
+                    b.HasIndex("ReviewedById1");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId1");
 
                     b.ToTable("Reports");
                 });
@@ -415,30 +399,15 @@ namespace YallaKhadra.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("YallaKhadra.Core.Entities.Photo", b =>
-                {
-                    b.HasOne("YallaKhadra.Core.Entities.Report", "Report")
-                        .WithMany("Photos")
-                        .HasForeignKey("ReportId");
-
-                    b.HasOne("YallaKhadra.Core.Entities.IdentityEntities.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
-
-                    b.Navigation("Report");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("YallaKhadra.Core.Entities.Report", b =>
                 {
                     b.HasOne("YallaKhadra.Core.Entities.IdentityEntities.ApplicationUser", "ReviewedBy")
                         .WithMany()
-                        .HasForeignKey("ReviewedById");
+                        .HasForeignKey("ReviewedById1");
 
                     b.HasOne("YallaKhadra.Core.Entities.IdentityEntities.ApplicationUser", "User")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("UserId1")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -450,11 +419,6 @@ namespace YallaKhadra.Infrastructure.Migrations
             modelBuilder.Entity("YallaKhadra.Core.Entities.IdentityEntities.ApplicationUser", b =>
                 {
                     b.Navigation("RefreshTokens");
-                });
-
-            modelBuilder.Entity("YallaKhadra.Core.Entities.Report", b =>
-                {
-                    b.Navigation("Photos");
                 });
 #pragma warning restore 612, 618
         }
