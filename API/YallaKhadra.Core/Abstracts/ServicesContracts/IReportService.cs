@@ -7,5 +7,6 @@ namespace YallaKhadra.Core.Abstracts.ServicesContracts
     public interface IReportService
     {
         public Task<ServiceOperationResult<Report?>> AddReportAsync(Report report, IList<IFormFile>? photos);
+        public Task<ServiceOperationResult<Report?>> ReviewReportAsync(int reportId, bool isApproved, string? notes, Guid reviewedById);
     }
 }
