@@ -22,11 +22,9 @@
     <Folder Include="Features\Authentication\Queries\Handlers\" />
     <Folder Include="Features\Authentication\Queries\RequestsModels\" />
     <Folder Include="Features\Authentication\Queries\Responses\" />
-    <Folder Include="Features\Reports\Queries\" />
     <Folder Include="Features\Users\Commands\" />
     <Folder Include="Helpers\" />
     <Folder Include="Mapping\Authentication\QueryMapping\" />
-    <Folder Include="Mapping\Reports\QueryMapping\" />
   </ItemGroup>
 
 </Project>

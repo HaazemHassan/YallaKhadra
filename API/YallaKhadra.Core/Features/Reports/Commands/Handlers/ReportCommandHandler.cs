@@ -10,7 +10,9 @@ using YallaKhadra.Core.Features.Reports.Commands.RequestsModels;
 
 namespace YallaKhadra.Core.Features.Reports.Commands.Handlers
 {
-    public class ReportCommandHandler : ResponseHandler, IRequestHandler<AddReportCommand, Response<string>>
+    public class ReportCommandHandler : ResponseHandler,
+                                        IRequestHandler<AddReportCommand, Response<string>>,
+                                        IRequestHandler<ReviewReportCommand, Response<string>>
     {
         #region Fields
         private readonly IReportService _reportService;
@@ -72,6 +74,43 @@ namespace YallaKhadra.Core.Features.Reports.Commands.Handlers
 
             }
 
+        }
+
+        public async Task<Response<string>> Handle(ReviewReportCommand request, CancellationToken cancellationToken)
+        {
+            await using var transaction = await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                var reviewerId = _currentUserService.UserId;
+                if (reviewerId == null)
+                {
+                    await _unitOfWork.RollbackAsync();
+                    return Unauthorized<string>("User is not authenticated");
+                }
+
+                // Review the report
+                var reviewResult = await _reportService.ReviewReportAsync(
+                    request.ReportId,
+                    request.IsApproved,
+                    request.Notes,
+                    reviewerId.Value);
+
+                if (reviewResult.Status != ServiceOperationStatus.Succeeded || reviewResult.Data is null)
+                {
+                    await _unitOfWork.RollbackAsync();
+                    return BadRequest<string>(reviewResult.ErrorMessage);
+                }
+
+                await _unitOfWork.CommitAsync();
+
+                var statusMessage = request.IsApproved ? "approved and set to InProgress" : "rejected";
+                return Success<string>($"Report has been {statusMessage} successfully");
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackAsync();
+                return BadRequest<string>($"An error occurred: {ex.Message}");
+            }
         }
         #endregion
     }

@@ -7,6 +7,8 @@ namespace YallaKhadra.Core.Mapping.Reports
         public ReportProfile()
         {
             AddReportCommandMapping();
+            GetPendingReportsPaginatedMapping();
+            GetMyReportsPaginatedMapping();
         }
     }
 }
