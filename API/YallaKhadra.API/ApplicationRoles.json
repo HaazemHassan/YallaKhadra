@@ -1,5 +1,24 @@
 [
-  "SuperAdmin",
-  "Admin",
-  "User"
+  {
+    "RoleName": "SuperAdmin",
+    "Permissions": [
+      "Permissions.Users.Manage"
+    ]
+  },
+  {
+    "RoleName": "Admin",
+    "Permissions": [
+      "Permissions.Users.Manage"
+    ]
+  },
+  {
+    "RoleName": "Employee",
+    "Permissions": [
+    ]
+  },
+  {
+    "RoleName": "User",
+    "Permissions": [
+    ]
+  }
 ]

@@ -27,9 +27,6 @@ namespace YallaKhadra.Services.Services {
         }
 
         public async Task<ServiceOperationResult<ApplicationUser?>> AddUser(ApplicationUser user, string password) {
-            if (user is null || password is null)
-                return ServiceOperationResult<ApplicationUser?>.Failure(ServiceOperationStatus.InvalidParameters, "User or password is invalid");
-            
             if (await IsUserExist(x => x.Email == user.Email))
                 return ServiceOperationResult<ApplicationUser?>.Failure(ServiceOperationStatus.AlreadyExists, "Email already exists");
 
@@ -44,14 +41,10 @@ namespace YallaKhadra.Services.Services {
             if (!createResult.Succeeded)
                 return ServiceOperationResult<ApplicationUser?>.Failure(ServiceOperationStatus.Failed, "Failed to create user");
 
-            var addToRoleresult = await _userManager.AddToRoleAsync(user, ApplicationUserRole.User.ToString());
-            if (!addToRoleresult.Succeeded)
-                return ServiceOperationResult<ApplicationUser?>.Failure(ServiceOperationStatus.Failed, "Failed to assign user role");
-
             //var succedded = await SendConfirmationEmailAsync(user);
             //if (!succedded)
             //    return ServiceOperationResult.Failed;
-            
+
             return ServiceOperationResult<ApplicationUser?>.Success(user);
         }
 

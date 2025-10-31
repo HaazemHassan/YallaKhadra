@@ -5,6 +5,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.RateLimiting;
+using YallaKhadra.API.Bases;
 using YallaKhadra.API.Services;
 using YallaKhadra.Core;
 using YallaKhadra.Core.Abstracts.ApiAbstracts;
@@ -14,14 +15,11 @@ using YallaKhadra.Core.Bases.Responses;
 using YallaKhadra.Infrastructure;
 using YallaKhadra.Services;
 
-namespace YallaKhadra.API.Extentions
-{
-    public static class RegisterDependencies
-    {
+namespace YallaKhadra.API.Extentions {
+    public static class RegisterDependencies {
         private const string GuestIdKey = "GuestId";   // used for ratelimiting
 
-        public static IServiceCollection DependenciesRegistration(this IServiceCollection services, IConfiguration configuration)
-        {
+        public static IServiceCollection DependenciesRegistration(this IServiceCollection services, IConfiguration configuration) {
             //API Layer Dependency Registrations
             services.AddTransient<ICurrentUserService, CurrentUserService>();
             services.AddTransient<IClientContextService, ClientContextService>();
@@ -43,14 +41,12 @@ namespace YallaKhadra.API.Extentions
             return services;
         }
 
-        private static IServiceCollection CloudnServiceConfiguations(this IServiceCollection services, IConfiguration configuration)
-        {
+        private static IServiceCollection CloudnServiceConfiguations(this IServiceCollection services, IConfiguration configuration) {
             services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
             return services;
         }
 
-        private static IServiceCollection AuthenticationServiceConfiguations(this IServiceCollection services, IConfiguration configuration)
-        {
+        private static IServiceCollection AuthenticationServiceConfiguations(this IServiceCollection services, IConfiguration configuration) {
             //JWT Authentication
             var jwtSettings = new JwtSettings();
             configuration.GetSection(nameof(jwtSettings)).Bind(jwtSettings);
@@ -61,17 +57,14 @@ namespace YallaKhadra.API.Extentions
             configuration.GetSection("GoogleAuth").Bind(googleAuthSettings);
             services.AddSingleton(googleAuthSettings);
 
-            services.AddAuthentication(x =>
-            {
+            services.AddAuthentication(x => {
                 x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-           .AddJwtBearer(x =>
-           {
+           .AddJwtBearer(x => {
                x.RequireHttpsMetadata = false;
                x.SaveToken = true;
-               x.TokenValidationParameters = new TokenValidationParameters
-               {
+               x.TokenValidationParameters = new TokenValidationParameters {
                    ValidateIssuer = jwtSettings.ValidateIssuer,
                    ValidIssuers = new[] { jwtSettings.Issuer },
                    ValidateIssuerSigningKey = jwtSettings.ValidateIssuerSigningKey,
@@ -83,16 +76,13 @@ namespace YallaKhadra.API.Extentions
                };
 
 
-               x.Events = new JwtBearerEvents
-               {
-                   OnMessageReceived = context =>
-                   {
+               x.Events = new JwtBearerEvents {
+                   OnMessageReceived = context => {
                        var accessToken = context.Request.Query["access_token"];
                        var path = context.HttpContext.Request.Path;
 
                        if (!string.IsNullOrEmpty(accessToken) &&
-                           path.StartsWithSegments("/chatHub"))
-                       {
+                           path.StartsWithSegments("/chatHub")) {
                            context.Token = accessToken;
                        }
 
@@ -108,14 +98,11 @@ namespace YallaKhadra.API.Extentions
             return services;
         }
 
-        private static IServiceCollection SwaggerServiceConfiguations(this IServiceCollection services, IConfiguration configuration)
-        {
+        private static IServiceCollection SwaggerServiceConfiguations(this IServiceCollection services, IConfiguration configuration) {
             // Swagger Configuration
             services.AddEndpointsApiExplorer();
-            services.AddSwaggerGen(options =>
-            {
-                options.SwaggerDoc("v1", new OpenApiInfo
-                {
+            services.AddSwaggerGen(options => {
+                options.SwaggerDoc("v1", new OpenApiInfo {
                     Title = "YallaKhadra API",
                     Version = "v1",
                     Description = "API for YallaKhadra application"
@@ -125,13 +112,11 @@ namespace YallaKhadra.API.Extentions
 
                 var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                if (File.Exists(xmlPath))
-                {
+                if (File.Exists(xmlPath)) {
                     options.IncludeXmlComments(xmlPath);
                 }
 
-                options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
-                {
+                options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme {
                     Description = "JWT Authorization header using the Bearer scheme (Example: 'Bearer 12345abcdef')",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
@@ -162,27 +147,25 @@ namespace YallaKhadra.API.Extentions
         //    return services;
         //}
 
-        private static IServiceCollection AutorizationServiceConfiguations(this IServiceCollection services, IConfiguration configuration)
-        {
-            services.AddAuthorization(options =>
-            {
-                options.AddPolicy("ResetPasswordPolicy", policy =>
-                {
+        private static IServiceCollection AutorizationServiceConfiguations(this IServiceCollection services, IConfiguration configuration) {
+            services.AddAuthorization(options => {
+                options.AddPolicy("ResetPasswordPolicy", policy => {
                     policy.RequireAuthenticatedUser();
                     policy.RequireClaim("purpose", "reset-password");
+                });
+
+                options.AddPolicy("CanManageUsers", policy => {
+                    policy.RequireClaim("Permission", AppPermissions.ManageUsers);
                 });
             });
             return services;
         }
 
         public static IServiceCollection RateLimitingDependencyConfigurations(
-         this IServiceCollection services, IConfiguration configuration)
-        {
+         this IServiceCollection services, IConfiguration configuration) {
 
-            services.AddRateLimiter(options =>
-            {
-                options.AddPolicy("defaultLimiter", httpContext =>
-                {
+            services.AddRateLimiter(options => {
+                options.AddPolicy("defaultLimiter", httpContext => {
                     string partitionKey;
                     var user = httpContext.User?.Identity?.Name;
 
@@ -196,8 +179,7 @@ namespace YallaKhadra.API.Extentions
                         partitionKey = GetFallbackPartitionKey(httpContext);
 
 
-                    return RateLimitPartition.GetSlidingWindowLimiter(partitionKey, key => new SlidingWindowRateLimiterOptions
-                    {
+                    return RateLimitPartition.GetSlidingWindowLimiter(partitionKey, key => new SlidingWindowRateLimiterOptions {
                         Window = TimeSpan.FromMinutes(1),
                         PermitLimit = 90,
                         QueueLimit = 10,
@@ -206,8 +188,7 @@ namespace YallaKhadra.API.Extentions
                     });
                 });
 
-                options.AddPolicy("loginLimiter", httpContext =>
-                {
+                options.AddPolicy("loginLimiter", httpContext => {
                     string partitionKey;
 
                     if (httpContext.Items.TryGetValue(GuestIdKey, out var guestId) && guestId is string guestIdString)
@@ -217,8 +198,7 @@ namespace YallaKhadra.API.Extentions
                         partitionKey = GetFallbackPartitionKey(httpContext);
 
 
-                    return RateLimitPartition.GetSlidingWindowLimiter(partitionKey, key => new SlidingWindowRateLimiterOptions
-                    {
+                    return RateLimitPartition.GetSlidingWindowLimiter(partitionKey, key => new SlidingWindowRateLimiterOptions {
                         Window = TimeSpan.FromMinutes(1),
                         PermitLimit = 5,
                         QueueLimit = 0,
@@ -227,10 +207,8 @@ namespace YallaKhadra.API.Extentions
                     });
                 });
 
-                options.OnRejected = async (context, token) =>
-                {
-                    if (context.HttpContext.Response.HasStarted)
-                    {
+                options.OnRejected = async (context, token) => {
+                    if (context.HttpContext.Response.HasStarted) {
                         return;
                     }
 
@@ -238,14 +216,12 @@ namespace YallaKhadra.API.Extentions
                     context.HttpContext.Response.ContentType = "application/json";
 
                     int retryAfterSeconds = 60;
-                    if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
-                    {
+                    if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)) {
                         retryAfterSeconds = (int)Math.Ceiling(retryAfter.TotalSeconds);
                     }
                     context.HttpContext.Response.Headers.RetryAfter = retryAfterSeconds.ToString();
 
-                    var response = new Response<string>
-                    {
+                    var response = new Response<string> {
                         StatusCode = HttpStatusCode.TooManyRequests,
                         Message = "Too many requests. Please try again later.",
                         Succeeded = false
@@ -259,15 +235,13 @@ namespace YallaKhadra.API.Extentions
 
             return services;
 
-            string GetFallbackPartitionKey(HttpContext httpContext)
-            {
+            string GetFallbackPartitionKey(HttpContext httpContext) {
                 var clientContextService = httpContext.RequestServices.GetRequiredService<IClientContextService>();
                 var ip = clientContextService.GetClientIpAddress(httpContext);
                 var userAgent = httpContext.Request.Headers["User-Agent"].FirstOrDefault() ?? "unknown";
 
                 var identifier = $"{ip}-{userAgent}";
-                using (var sha256 = SHA256.Create())
-                {
+                using (var sha256 = SHA256.Create()) {
                     var bytes = Encoding.UTF8.GetBytes(identifier);
                     var hash = sha256.ComputeHash(bytes);
                     return Convert.ToBase64String(hash);

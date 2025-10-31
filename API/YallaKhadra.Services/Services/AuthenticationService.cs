@@ -18,6 +18,7 @@ namespace YallaKhadra.Services.Services {
 
         private readonly JwtSettings _jwtSettings;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IApplicationUserService _applicationUserService;
         private readonly GoogleAuthSettings _googleAuthSettings;
@@ -26,13 +27,14 @@ namespace YallaKhadra.Services.Services {
 
 
 
-        public AuthenticationService(JwtSettings jwtSettings, UserManager<ApplicationUser> userManager, IRefreshTokenRepository refreshTokenRepository, IApplicationUserService applicationUserService, GoogleAuthSettings googleAuthSettings, IMapper mapper /*IEmailService emailService*/) {
+        public AuthenticationService(JwtSettings jwtSettings, UserManager<ApplicationUser> userManager, IRefreshTokenRepository refreshTokenRepository, IApplicationUserService applicationUserService, GoogleAuthSettings googleAuthSettings, IMapper mapper /*IEmailService emailService*/, RoleManager<ApplicationRole> roleManager) {
             _jwtSettings = jwtSettings;
             _userManager = userManager;
             _refreshTokenRepository = refreshTokenRepository;
             _applicationUserService = applicationUserService;
             _googleAuthSettings = googleAuthSettings;
             _mapper = mapper;
+            _roleManager = roleManager;
             //_emailService = emailService;
         }
 
@@ -255,12 +257,20 @@ namespace YallaKhadra.Services.Services {
                  new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())
 
              };
-            var roles = await _userManager.GetRolesAsync(user);
-            foreach (var role in roles)
-                claims.Add(new Claim(ClaimTypes.Role, role));
 
             var customClaims = await _userManager.GetClaimsAsync(user);
             claims.AddRange(customClaims);
+
+            var roles = await _userManager.GetRolesAsync(user);
+            foreach (var roleName in roles) {
+                claims.Add(new Claim(ClaimTypes.Role, roleName));
+
+                var role = await _roleManager.FindByNameAsync(roleName);
+                if (role == null) continue;
+
+                var roleClaims = await _roleManager.GetClaimsAsync(role);
+                claims.AddRange(roleClaims);
+            }
 
             return claims;
         }
