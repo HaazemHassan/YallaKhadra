@@ -4,7 +4,7 @@ namespace YallaKhadra.Core.Mapping.Users;
 
 public partial class UserProfile : Profile {
     public UserProfile() {
-        //AddUserMapping();
+        AddUserMapping();
         GetUsersPaginatedMapping();
         GetUserByIdMapping();
         GetUserByUsernameMapping();

@@ -7,24 +7,44 @@ using YallaKhadra.Core.Bases.Authentication;
 using YallaKhadra.Core.Bases.Responses;
 using YallaKhadra.Core.Features.Authentication.Commands.RequestsModels;
 
-namespace YallaKhadra.Controllers
-{
+namespace YallaKhadra.Controllers {
 
     /// <summary>
     /// Authentication controller for handling user login and token management
     /// </summary>
     [ApiController]
     [Produces("application/json")]
-    public class AuthenticationController : BaseController
-    {
+    public class AuthenticationController : BaseController {
         private readonly JwtSettings _jwtSettings;
         private readonly IClientContextService _clientContextService;
 
-        public AuthenticationController(JwtSettings jwtSettings, IClientContextService clientContextService)
-        {
+        public AuthenticationController(JwtSettings jwtSettings, IClientContextService clientContextService) {
             _jwtSettings = jwtSettings;
             _clientContextService = clientContextService;
         }
+
+
+
+        /// <summary>
+        /// Register a new user account
+        /// </summary>
+        /// <param name="command">User registration details including username, email, password, and personal information</param>
+        /// <returns>JWT token with user information if registration is successful</returns>
+        /// <response code="201">User registered successfully and JWT token returned</response>
+        /// <response code="400">Invalid input data or registration failed</response>
+        /// <response code="409">User with the same email, username, or phone number already exists</response>
+        /// <response code="403">User is already authenticated (anonymous only endpoint)</response>
+        [HttpPost("register")]
+        [AnonymousOnly]
+        [ProducesResponseType(typeof(Response<AuthResult>), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> Register([FromBody] RegisterCommand command) {
+            var result = await Mediator.Send(command);
+            return NewResult(result);
+        }
+
 
         /// <summary>
         /// Authenticate a user with username and password
@@ -46,8 +66,7 @@ namespace YallaKhadra.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-        public async Task<IActionResult> Login([FromBody] SignInCommand command)
-        {
+        public async Task<IActionResult> Login([FromBody] SignInCommand command) {
             var result = await Mediator.Send(command);
             HandleRefreshToken(result);
             return NewResult(result);
@@ -76,8 +95,7 @@ namespace YallaKhadra.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginCommand command)
-        {
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginCommand command) {
             var result = await Mediator.Send(command);
             HandleRefreshToken(result);
             return NewResult(result);
@@ -100,8 +118,7 @@ namespace YallaKhadra.Controllers
         [ProducesResponseType(typeof(Response<AuthResult>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command)
-        {
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command) {
             if (!_clientContextService.IsWebClient())
                 command.RefreshToken = Request.Cookies["refreshToken"];
             else if (command.RefreshToken is null)
@@ -188,17 +205,14 @@ namespace YallaKhadra.Controllers
         //}
 
 
-        private void HandleRefreshToken(Response<AuthResult> result)
-        {
+        private void HandleRefreshToken(Response<AuthResult> result) {
             if (!result.Succeeded || result.Data?.RefreshToken is null)
                 return;
 
             var refreshToken = result.Data.RefreshToken.Token;
 
-            if (_clientContextService.IsWebClient())
-            {
-                var cookieOptions = new CookieOptions
-                {
+            if (_clientContextService.IsWebClient()) {
+                var cookieOptions = new CookieOptions {
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,

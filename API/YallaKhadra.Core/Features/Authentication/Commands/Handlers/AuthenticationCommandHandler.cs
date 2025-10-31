@@ -51,7 +51,13 @@ public class AuthenticationCommandHandler : ResponseHandler, IRequestHandler<Reg
                 };
             }
 
+
             var user = addUserResult.Data;
+
+            var addToRoleResult = await _userManager.AddToRoleAsync(user, UserRole.User.ToString());
+            if (!addToRoleResult.Succeeded)
+                return BadRequest<AuthResult>("Failed to assign user to role");
+
             var authResult = await _authenticationService.AuthenticateAsync(user);
             if (authResult.Status != ServiceOperationStatus.Succeeded || authResult.Data is null) {
                 await _unitOfWork.RollbackAsync();
@@ -59,7 +65,6 @@ public class AuthenticationCommandHandler : ResponseHandler, IRequestHandler<Reg
             }
 
             authResult.Data.User = _mapper.Map<GetUserByIdResponse>(user);
-
             await _unitOfWork.CommitAsync();
             return Created(authResult.Data);
         }

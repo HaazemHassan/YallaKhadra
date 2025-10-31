@@ -1,43 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using YallaKhadra.API.Bases;
-using YallaKhadra.API.Filters;
-using YallaKhadra.Core.Bases.Authentication;
 using YallaKhadra.Core.Bases.Responses;
-using YallaKhadra.Core.Features.Authentication.Commands.RequestsModels;
+using YallaKhadra.Core.Features.Users.Commands.RequestModels;
 using YallaKhadra.Core.Features.Users.Queries.Models;
 using YallaKhadra.Core.Features.Users.Queries.Responses;
 
-namespace YallaKhadra.API.Controllers
-{
+namespace YallaKhadra.API.Controllers {
 
     /// <summary>
     /// User management controller for handling user operations
     /// </summary>
     [ApiController]
     [Produces("application/json")]
-    public class ApplicationUserController : BaseController
-    {
+    public class ApplicationUserController : BaseController {
 
-        /// <summary>
-        /// Register a new user account
-        /// </summary>
-        /// <param name="command">User registration details including username, email, password, and personal information</param>
-        /// <returns>JWT token with user information if registration is successful</returns>
-        /// <response code="201">User registered successfully and JWT token returned</response>
-        /// <response code="400">Invalid input data or registration failed</response>
-        /// <response code="409">User with the same email, username, or phone number already exists</response>
-        /// <response code="403">User is already authenticated (anonymous only endpoint)</response>
-        [HttpPost("register")]
-        [AnonymousOnly]
-        [ProducesResponseType(typeof(Response<AuthResult>), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> Create([FromBody] RegisterCommand command)
-        {
-            var result = await Mediator.Send(command);
-            return NewResult(result);
-        }
 
         /// <summary>
         /// Get all users with pagination
@@ -49,8 +26,7 @@ namespace YallaKhadra.API.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(PaginatedResult<GetUsersPaginatedResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetAll([FromQuery] GetUsersPaginatedQuery query)
-        {
+        public async Task<IActionResult> GetAll([FromQuery] GetUsersPaginatedQuery query) {
             var result = await Mediator.Send(query);
             return Ok(result);
         }
@@ -67,8 +43,7 @@ namespace YallaKhadra.API.Controllers
         [ProducesResponseType(typeof(Response<GetUserByIdResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetById([FromRoute] GetUserByIdQuery query)
-        {
+        public async Task<IActionResult> GetById([FromRoute] GetUserByIdQuery query) {
             var result = await Mediator.Send(query);
             return NewResult(result);
         }
@@ -85,8 +60,7 @@ namespace YallaKhadra.API.Controllers
         [ProducesResponseType(typeof(Response<GetUserByUsernameResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetByUsername([FromRoute] GetUserByUsernameQuery query)
-        {
+        public async Task<IActionResult> GetByUsername([FromRoute] GetUserByUsernameQuery query) {
             var result = await Mediator.Send(query);
             return NewResult(result);
         }
@@ -119,8 +93,7 @@ namespace YallaKhadra.API.Controllers
         [HttpGet("check-username")]
         [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CheckUsernameAvailability([FromQuery] CheckUsernameAvailabilityQuery query)
-        {
+        public async Task<IActionResult> CheckUsernameAvailability([FromQuery] CheckUsernameAvailabilityQuery query) {
             var result = await Mediator.Send(query);
             return NewResult(result);
         }
@@ -135,8 +108,7 @@ namespace YallaKhadra.API.Controllers
         [HttpGet("check-email")]
         [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CheckEmailAvailability([FromQuery] CheckEmailAvailabilityQuery query)
-        {
+        public async Task<IActionResult> CheckEmailAvailability([FromQuery] CheckEmailAvailabilityQuery query) {
             var result = await Mediator.Send(query);
             return NewResult(result);
         }
@@ -222,5 +194,12 @@ namespace YallaKhadra.API.Controllers
         //    var result = await mediator.Send(command);
         //    return NewResult(result);
         //}
+
+        [HttpPost("add-user")]
+        [Authorize(policy: "CanManageUsers")]
+        public async Task<IActionResult> AddUser([FromBody] AddUserCommand command) {
+            var result = await Mediator.Send(command);
+            return NewResult(result);
+        }
     }
 }
