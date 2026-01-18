@@ -1,0 +1,6 @@
+@YallaKhadra.API_HostAddress = http://localhost:5001
+
+GET {{YallaKhadra.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
