@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using YallaKhadra.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using YallaKhadra.Infrastructure.Data;
 namespace YallaKhadra.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260119124005_WasteReportEntity")]
+    partial class WasteReportEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -348,7 +351,12 @@ namespace YallaKhadra.Infrastructure.Migrations
                     b.Property<int>("ReportId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("WasteReportId")
+                        .HasColumnType("int");
+
                     b.HasIndex("ReportId");
+
+                    b.HasIndex("WasteReportId");
 
                     b.ToTable("ReportImages", (string)null);
                 });
@@ -435,10 +443,14 @@ namespace YallaKhadra.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("YallaKhadra.Core.Entities.WasteReport", "Report")
-                        .WithMany("Images")
+                        .WithMany()
                         .HasForeignKey("ReportId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("YallaKhadra.Core.Entities.WasteReport", null)
+                        .WithMany("Images")
+                        .HasForeignKey("WasteReportId");
 
                     b.Navigation("Report");
                 });
