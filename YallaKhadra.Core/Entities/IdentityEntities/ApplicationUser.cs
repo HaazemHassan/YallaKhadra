@@ -4,6 +4,7 @@ namespace YallaKhadra.Core.Entities.IdentityEntities {
     public class ApplicationUser : IdentityUser<int> {
         public ApplicationUser() {
             RefreshTokens = new HashSet<RefreshToken>();
+            PointsTransactions = new HashSet<PointsTransaction>();
         }
 
         public string FirstName { get; set; }
@@ -13,6 +14,7 @@ namespace YallaKhadra.Core.Entities.IdentityEntities {
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual ICollection<RefreshToken> RefreshTokens { get; set; }
+        public virtual ICollection<PointsTransaction> PointsTransactions { get; set; }
 
     }
 }

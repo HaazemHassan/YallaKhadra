@@ -64,6 +64,7 @@ public static class InfrastructureDependencyRegisteration {
         services.AddTransient<IUnitOfWork, UnitOfWork>();
         services.AddTransient<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddTransient<IWasteReportRepository, WasteReportRepository>();
+        services.AddTransient<IPointsTransactionRepository, PointsTransactionRepository>();
 
 
 
