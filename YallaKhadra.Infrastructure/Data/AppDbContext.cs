@@ -12,6 +12,7 @@ namespace YallaKhadra.Infrastructure.Data {
         public DbSet<WasteReport> Reports { get; set; }
         public DbSet<BaseImage> Images { get; set; }
         public DbSet<ReportImage> ReportImages { get; set; }
+        public DbSet<PointsTransaction> PointsTransactions { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
