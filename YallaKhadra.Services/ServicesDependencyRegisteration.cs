@@ -8,7 +8,9 @@ namespace YallaKhadra.Services {
         public static IServiceCollection ServiceLayerDependencyRegistration(this IServiceCollection services, IConfiguration configuration) {
             services.AddTransient<IApplicationUserService, ApplicationUserService>();
             services.AddTransient<IAuthenticationService, AuthenticationService>();
-
+            services.AddTransient<IWasteReportService, WasteReportService>();
+            services.AddTransient<ICloudinaryService, CloudinaryService>();
+            services.AddTransient(typeof(IImageService<>), typeof(ImageService<>));
 
             return services;
         }

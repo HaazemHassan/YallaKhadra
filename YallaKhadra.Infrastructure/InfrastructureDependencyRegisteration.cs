@@ -63,6 +63,7 @@ public static class InfrastructureDependencyRegisteration {
         services.AddTransient(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddTransient<IUnitOfWork, UnitOfWork>();
         services.AddTransient<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddTransient<IWasteReportRepository, WasteReportRepository>();
 
 
 
