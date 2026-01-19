@@ -34,6 +34,40 @@ namespace YallaKhadra.API.Controllers {
         }
 
         /// <summary>
+        /// Get all waste reports with pagination, sorted by creation date (newest first)
+        /// </summary>
+        /// <param name="query">Pagination parameters (page number and page size)</param>
+        /// <returns>Paginated list of waste reports with images and user information</returns>
+        /// <response code="200">Returns paginated list of waste reports</response>
+        /// <response code="400">Invalid pagination parameters</response>
+        /// <response code="401">User is not authenticated</response>
+        [HttpGet]
+        [ProducesResponseType(typeof(PaginatedResult<WasteReportResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetAllWasteReports([FromQuery] GetWasteReportsPaginatedQuery query) {
+            var result = await Mediator.Send(query);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Get waste reports near a specific location within a given radius
+        /// </summary>
+        /// <param name="query">Location coordinates (latitude, longitude) and search radius in kilometers</param>
+        /// <returns>List of waste reports within the specified radius, sorted by distance (nearest first)</returns>
+        /// <response code="200">Returns list of nearby waste reports</response>
+        /// <response code="400">Invalid coordinates or radius</response>
+        /// <response code="401">User is not authenticated</response>
+        [HttpGet("near")]
+        [ProducesResponseType(typeof(Response<List<WasteReportResponse>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetReportsNearLocation([FromQuery] GetReportsNearLocationQuery query) {
+            var result = await Mediator.Send(query);
+            return NewResult(result);
+        }
+
+        /// <summary>
         /// Get a waste report by its ID
         /// </summary>
         /// <param name="id">Waste report ID</param>
