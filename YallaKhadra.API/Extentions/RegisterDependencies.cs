@@ -9,6 +9,7 @@ using YallaKhadra.API.Services;
 using YallaKhadra.Core;
 using YallaKhadra.Core.Abstracts.ApiAbstracts;
 using YallaKhadra.Core.Bases.Authentication;
+using YallaKhadra.Core.Bases.Cloud;
 using YallaKhadra.Core.Bases.Responses;
 using YallaKhadra.Infrastructure;
 using YallaKhadra.Services;
@@ -35,6 +36,7 @@ namespace YallaKhadra.API.Extentions {
             //Service Configurations
             AuthenticationServiceConfiguations(services, configuration);
             SwaggerServiceConfiguations(services, configuration);
+            CloudnServiceConfiguations(services, configuration);
             //EmailServiceConfiguations(services, configuration);
             AutorizationServiceConfiguations(services, configuration);
             RateLimitingDependencyConfigurations(services, configuration);
@@ -217,6 +219,12 @@ namespace YallaKhadra.API.Extentions {
             }
         }
 
+
+        private static IServiceCollection CloudnServiceConfiguations(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
+            return services;
+        }
     }
 }
 
