@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using YallaKhadra.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using YallaKhadra.Infrastructure.Data;
 namespace YallaKhadra.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260120095059_AddCleanupEntity")]
+    partial class AddCleanupEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -168,11 +171,12 @@ namespace YallaKhadra.Infrastructure.Migrations
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("FinalWasteType")
+                    b.Property<int>("FinalWasteType")
                         .HasColumnType("int");
 
-                    b.Property<decimal?>("FinalWeightInKg")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<decimal>("FinalWeightInKg")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<int>("ReportId")
                         .HasColumnType("int");

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using YallaKhadra.API.Bases;
 using YallaKhadra.Core.Bases.Responses;
+using YallaKhadra.Core.Enums;
 using YallaKhadra.Core.Features.WasteReports.Commands.RequestModels;
 using YallaKhadra.Core.Features.WasteReports.Queries.Models;
 using YallaKhadra.Core.Features.WasteReports.Queries.Responses;
@@ -28,6 +29,7 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(typeof(Response<WasteReportResponse>), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [Authorize(Roles = $"{nameof(UserRole.User)}")]
         public async Task<IActionResult> CreateWasteReport([FromForm] CreateWasteReportCommand command) {
             var result = await Mediator.Send(command);
             return NewResult(result);
@@ -45,7 +47,26 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(typeof(PaginatedResult<WasteReportResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.SuperAdmin)}")]
         public async Task<IActionResult> GetAllWasteReports([FromQuery] GetWasteReportsPaginatedQuery query) {
+            var result = await Mediator.Send(query);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Get pending waste reports with pagination, sorted by creation date (oldest first - FIFO)
+        /// </summary>
+        /// <param name="query">Pagination parameters (page number and page size)</param>
+        /// <returns>Paginated list of pending reports ordered by date (oldest first)</returns>
+        /// <response code="200">Returns paginated list of pending reports</response>
+        /// <response code="400">Invalid pagination parameters</response>
+        /// <response code="401">User is not authenticated</response>
+        [HttpGet("pending")]
+        [ProducesResponseType(typeof(PaginatedResult<WasteReportResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.SuperAdmin)},{nameof(UserRole.Worker)}")]
+        public async Task<IActionResult> GetPendingReports([FromQuery] GetPendingReportsQuery query) {
             var result = await Mediator.Send(query);
             return Ok(result);
         }
@@ -62,6 +83,7 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(typeof(Response<List<WasteReportResponse>>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [Authorize(Roles = nameof(UserRole.Worker))]
         public async Task<IActionResult> GetReportsNearLocation([FromQuery] GetReportsNearLocationQuery query) {
             var result = await Mediator.Send(query);
             return NewResult(result);
@@ -79,6 +101,7 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(typeof(Response<WasteReportResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.SuperAdmin)},{nameof(UserRole.Worker)}")]
         public async Task<IActionResult> GetWasteReportById([FromRoute] int id) {
             var query = new GetWasteReportByIdQuery { Id = id };
             var result = await Mediator.Send(query);

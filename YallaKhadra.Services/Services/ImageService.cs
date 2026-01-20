@@ -60,6 +60,7 @@ namespace YallaKhadra.Services.Services
             return typeof(T).Name switch
             {
                 nameof(ReportImage) => "reports",
+                nameof(CleanupImage) => "cleanups",
                 _ => "others"
             };
         }
@@ -71,7 +72,9 @@ namespace YallaKhadra.Services.Services
                 case ReportImage reportImage:
                     reportImage.ReportId = ownerId;
                     break;
-
+                case CleanupImage cleanupImage:
+                    cleanupImage.CleanupTaskId = ownerId;
+                    break;
                 default:
                     throw new InvalidOperationException("Unsupported image type");
             }

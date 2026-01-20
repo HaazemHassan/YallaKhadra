@@ -11,14 +11,11 @@ namespace YallaKhadra.Services.Services {
     public class PointsTransactionService : IPointsTransactionService {
         private readonly IPointsTransactionRepository _pointsTransactionRepository;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IUnitOfWork _unitOfWork;
 
-        public PointsTransactionService(IPointsTransactionRepository pointsTransactionRepository, UserManager<ApplicationUser> userManager,
-            IUnitOfWork unitOfWork)
+        public PointsTransactionService(IPointsTransactionRepository pointsTransactionRepository, UserManager<ApplicationUser> userManager)
         {
             _pointsTransactionRepository = pointsTransactionRepository;
             _userManager = userManager;
-            _unitOfWork = unitOfWork;
         }
 
         public async Task<ServiceOperationResult<PointsTransaction>> EarnPointsAsync(int userId,int points,PointsSourceType sourceType,int sourceId,
@@ -33,38 +30,29 @@ namespace YallaKhadra.Services.Services {
                 if (user is null)
                     return ServiceOperationResult<PointsTransaction>.Failure(ServiceOperationStatus.NotFound,"User not found.")!;
 
-                // Begin transaction
-                using var transaction = await _unitOfWork.BeginTransactionAsync();
-                try {
-                    var pointsTransaction = new PointsTransaction {
-                        UserId = userId,
-                        Points = points,
-                        TransactionType = PointsTransactionType.Earn,
-                        pointsSource = sourceType,
-                        SourceId = sourceId,
-                        CreatedAt = DateTime.UtcNow
-                    };
+                var pointsTransaction = new PointsTransaction {
+                    UserId = userId,
+                    Points = points,
+                    TransactionType = PointsTransactionType.Earn,
+                    pointsSource = sourceType,
+                    SourceId = sourceId,
+                    CreatedAt = DateTime.UtcNow
+                };
 
-                    await _pointsTransactionRepository.AddAsync(pointsTransaction);
+                await _pointsTransactionRepository.AddAsync(pointsTransaction);
 
-                    // Update user's balance
-                    user.PointsBalance += points;
-                    var updateResult = await _userManager.UpdateAsync(user);
+                // Update user's balance
+                user.PointsBalance += points;
+                var updateResult = await _userManager.UpdateAsync(user);
 
-                    if (!updateResult.Succeeded) {
-                        await _unitOfWork.RollbackAsync();
-                        return ServiceOperationResult<PointsTransaction>.Failure(ServiceOperationStatus.Failed,"Failed to update user balance.")!;
-                    }
-
-                    // Commit transaction
-                    await _unitOfWork.CommitAsync();
-
-                    return ServiceOperationResult<PointsTransaction>.Success(pointsTransaction)!;
+                if (!updateResult.Succeeded) {
+                    return ServiceOperationResult<PointsTransaction>.Failure(ServiceOperationStatus.Failed,"Failed to update user balance.")!;
                 }
-                catch {
-                    await _unitOfWork.RollbackAsync();
-                    throw;
-                }
+
+
+
+                return ServiceOperationResult<PointsTransaction>.Success(pointsTransaction)!;
+         
             }
             catch (Exception ex) {
                 return ServiceOperationResult<PointsTransaction>.Failure(ServiceOperationStatus.Failed,$"Failed to earn points: {ex.Message}")!;
@@ -83,51 +71,37 @@ namespace YallaKhadra.Services.Services {
                 if (user is null)
                     return ServiceOperationResult<PointsTransaction>.Failure(ServiceOperationStatus.NotFound,"User not found.")!;
 
-
                 if (user.PointsBalance < points)
                     return ServiceOperationResult<PointsTransaction>.Failure(ServiceOperationStatus.Failed,"Insufficient points balance.")!;
+        
+                var pointsTransaction = new PointsTransaction {
+                    UserId = userId,
+                    Points = points,
+                    TransactionType = PointsTransactionType.Spend,
+                    pointsSource = sourceType,
+                    SourceId = sourceId,
+                    CreatedAt = DateTime.UtcNow
+                };
 
-                // Begin transaction
-                using var transaction = await _unitOfWork.BeginTransactionAsync();
-                try {
-                    var pointsTransaction = new PointsTransaction {
-                        UserId = userId,
-                        Points = points,
-                        TransactionType = PointsTransactionType.Spend,
-                        pointsSource = sourceType,
-                        SourceId = sourceId,
-                        CreatedAt = DateTime.UtcNow
-                    };
+                await _pointsTransactionRepository.AddAsync(pointsTransaction);
 
-                    await _pointsTransactionRepository.AddAsync(pointsTransaction);
+                // Update user balance
+                user.PointsBalance -= points;
+                var updateResult = await _userManager.UpdateAsync(user);
 
-                    // Update user balance
-                    user.PointsBalance -= points;
-                    var updateResult = await _userManager.UpdateAsync(user);
+                if (!updateResult.Succeeded) {
+                    return ServiceOperationResult<PointsTransaction>.Failure(ServiceOperationStatus.Failed,"Failed to update user balance.")!;
+                }   
 
-                    if (!updateResult.Succeeded) {
-                        await _unitOfWork.RollbackAsync();
-                        return ServiceOperationResult<PointsTransaction>.Failure(ServiceOperationStatus.Failed,"Failed to update user balance.")!;
-                    }
-
-                    // Commit transaction
-                    await _unitOfWork.CommitAsync();
-
-                    return ServiceOperationResult<PointsTransaction>.Success(pointsTransaction)!;
-                }
-                catch {
-                    await _unitOfWork.RollbackAsync();
-                    throw;
-                }
+                return ServiceOperationResult<PointsTransaction>.Success(pointsTransaction)!;
             }
             catch (Exception ex) {
                 return ServiceOperationResult<PointsTransaction>.Failure(ServiceOperationStatus.Failed,$"Failed to spend points: {ex.Message}")!;
             }
         }
 
-        public async Task<List<PointsTransaction>> GetUserTransactionsAsync(
-            int userId,
-            CancellationToken cancellationToken = default) {
+        public async Task<List<PointsTransaction>> GetUserTransactionsAsync( int userId, CancellationToken cancellationToken = default) 
+        {
             return await _pointsTransactionRepository
                 .GetTableNoTracking(t => t.UserId == userId)
                 .OrderByDescending(t => t.CreatedAt)
