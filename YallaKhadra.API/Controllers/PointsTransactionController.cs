@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using YallaKhadra.API.Bases;
 using YallaKhadra.Core.Bases.Responses;
+using YallaKhadra.Core.Enums;
 using YallaKhadra.Core.Features.PointsTransactions.Queries.Models;
 using YallaKhadra.Core.Features.PointsTransactions.Queries.Responses;
 
@@ -12,6 +13,7 @@ namespace YallaKhadra.API.Controllers {
     [ApiController]
     [Authorize]
     [Produces("application/json")]
+    [Authorize(Roles = nameof(UserRole.User))]
     public class PointsTransactionController : BaseController {
 
         /// <summary>

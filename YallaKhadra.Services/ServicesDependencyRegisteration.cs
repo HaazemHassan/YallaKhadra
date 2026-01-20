@@ -10,6 +10,7 @@ namespace YallaKhadra.Services {
             services.AddTransient<IAuthenticationService, AuthenticationService>();
             services.AddTransient<IWasteReportService, WasteReportService>();
             services.AddTransient<IPointsTransactionService, PointsTransactionService>();
+            services.AddTransient<ICleanupTaskService, CleanupTaskService>();
             services.AddTransient<ICloudinaryService, CloudinaryService>();
             services.AddTransient(typeof(IImageService<>), typeof(ImageService<>));
 

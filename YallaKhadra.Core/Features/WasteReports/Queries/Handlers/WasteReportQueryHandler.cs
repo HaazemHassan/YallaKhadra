@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using YallaKhadra.Core.Abstracts.InfrastructureAbstracts;
 using YallaKhadra.Core.Bases.Responses;
+using YallaKhadra.Core.Enums;
 using YallaKhadra.Core.Features.WasteReports.Queries.Models;
 using YallaKhadra.Core.Features.WasteReports.Queries.Responses;
 using YallaKhadra.Core.Helpers;
@@ -12,7 +13,8 @@ namespace YallaKhadra.Core.Features.WasteReports.Queries.Handlers {
     public class WasteReportQueryHandler : ResponseHandler,
                                             IRequestHandler<GetWasteReportByIdQuery, Response<WasteReportResponse>>,
                                             IRequestHandler<GetWasteReportsPaginatedQuery, PaginatedResult<WasteReportResponse>>,
-                                            IRequestHandler<GetReportsNearLocationQuery, Response<List<WasteReportResponse>>> {
+                                            IRequestHandler<GetReportsNearLocationQuery, Response<List<WasteReportResponse>>>,
+                                            IRequestHandler<GetPendingReportsQuery, PaginatedResult<WasteReportResponse>> {
 
         private readonly IWasteReportRepository _wasteReportRepository;
         private readonly IMapper _mapper;
@@ -24,9 +26,7 @@ namespace YallaKhadra.Core.Features.WasteReports.Queries.Handlers {
             _mapper = mapper;
         }
 
-        public async Task<Response<WasteReportResponse>> Handle(
-            GetWasteReportByIdQuery request,
-            CancellationToken cancellationToken) {
+        public async Task<Response<WasteReportResponse>> Handle(GetWasteReportByIdQuery request,CancellationToken cancellationToken) {
             try {
                 // Get waste report by ID with related data
                 var wasteReport = await _wasteReportRepository
@@ -48,9 +48,7 @@ namespace YallaKhadra.Core.Features.WasteReports.Queries.Handlers {
             }
         }
 
-        public async Task<PaginatedResult<WasteReportResponse>> Handle(
-            GetWasteReportsPaginatedQuery request,
-            CancellationToken cancellationToken) {
+        public async Task<PaginatedResult<WasteReportResponse>> Handle(GetWasteReportsPaginatedQuery request,CancellationToken cancellationToken) {
             try {
                 // Get all waste reports with related data, sorted by date descending
                 var wasteReportsQuery = _wasteReportRepository
@@ -71,13 +69,11 @@ namespace YallaKhadra.Core.Features.WasteReports.Queries.Handlers {
             }
         }
 
-        public async Task<Response<List<WasteReportResponse>>> Handle(
-            GetReportsNearLocationQuery request,
-            CancellationToken cancellationToken) {
+        public async Task<Response<List<WasteReportResponse>>> Handle(GetReportsNearLocationQuery request,CancellationToken cancellationToken) {
             try {
                 // Get all waste reports with related data
                 var allReports = await _wasteReportRepository
-                    .GetTableNoTracking()
+                    .GetTableNoTracking(r => r.Status == ReportStatus.Pending)
                     .Include(r => r.Images)
                     .Include(r => r.User)
                     .ToListAsync(cancellationToken);
@@ -108,5 +104,26 @@ namespace YallaKhadra.Core.Features.WasteReports.Queries.Handlers {
                 return BadRequest<List<WasteReportResponse>>($"An error occurred: {ex.Message}");
             }
         }
+
+        public async Task<PaginatedResult<WasteReportResponse>> Handle(GetPendingReportsQuery request,CancellationToken cancellationToken) {
+            try {
+                var pendingReportsQuery = _wasteReportRepository
+                    .GetTableNoTracking(r => r.Status == ReportStatus.Pending)
+                    .Include(r => r.Images)
+                    .Include(r => r.User)
+                    .OrderBy(r => r.CreatedAt); 
+
+
+                var paginatedResult = await pendingReportsQuery
+                    .ProjectTo<WasteReportResponse>(_mapper.ConfigurationProvider)
+                    .ToPaginatedResultAsync(request.PageNumber, request.PageSize);
+
+                return paginatedResult;
+            }
+            catch (Exception ex) {
+                return PaginatedResult<WasteReportResponse>.Failure($"An error occurred: {ex.Message}");
+            }
+        }
     }
 }
+
