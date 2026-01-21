@@ -61,6 +61,7 @@ namespace YallaKhadra.Services.Services
             {
                 nameof(ReportImage) => "reports",
                 nameof(CleanupImage) => "cleanups",
+                nameof(WasteScanImage) => "WasteScanImages",
                 _ => "others"
             };
         }
@@ -74,6 +75,9 @@ namespace YallaKhadra.Services.Services
                     break;
                 case CleanupImage cleanupImage:
                     cleanupImage.CleanupTaskId = ownerId;
+                    break;
+                case WasteScanImage wasteScanImage:
+                    wasteScanImage.AIWasteScanId = ownerId;
                     break;
                 default:
                     throw new InvalidOperationException("Unsupported image type");

@@ -15,6 +15,8 @@ namespace YallaKhadra.Infrastructure.Data {
         public DbSet<PointsTransaction> PointsTransactions { get; set; }
         public DbSet<CleanupTask> CleanupTasks { get; set; }
         public DbSet<CleanupImage> CleanupImages { get; set; }
+        public DbSet<AIWasteScan> AIWasteScans { get; set; }
+        public DbSet<WasteScanImage> WasteScanImages { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
