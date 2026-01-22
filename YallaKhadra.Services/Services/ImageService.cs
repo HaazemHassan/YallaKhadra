@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using YallaKhadra.Core.Abstracts.ServicesContracts;
 using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.E_CommerceEntities;
 using YallaKhadra.Infrastructure.Data;
 
 namespace YallaKhadra.Services.Services
@@ -62,6 +63,7 @@ namespace YallaKhadra.Services.Services
                 nameof(ReportImage) => "reports",
                 nameof(CleanupImage) => "cleanups",
                 nameof(WasteScanImage) => "WasteScanImages",
+                nameof(ProductImage) => "ProductImage",
                 _ => "others"
             };
         }
@@ -78,6 +80,9 @@ namespace YallaKhadra.Services.Services
                     break;
                 case WasteScanImage wasteScanImage:
                     wasteScanImage.AIWasteScanId = ownerId;
+                    break;
+                case ProductImage productImage:
+                    productImage.ProductId= ownerId;
                     break;
                 default:
                     throw new InvalidOperationException("Unsupported image type");
