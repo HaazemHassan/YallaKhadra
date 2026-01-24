@@ -42,7 +42,7 @@
         }
 
 
-        public Response Updated<T>() {
+        public Response Updated(string? message = null) {
             return new Response() {
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Succeeded = true,

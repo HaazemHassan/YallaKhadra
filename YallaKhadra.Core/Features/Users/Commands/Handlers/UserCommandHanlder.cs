@@ -13,7 +13,9 @@ using YallaKhadra.Core.Features.Users.Commands.Responses;
 using YallaKhadra.Core.Features.Users.Queries.Responses;
 
 namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
-    public class UserCommandHanlder : ResponseHandler, IRequestHandler<RegisterCommand, Response<AuthResult>>, IRequestHandler<AddUserCommand, Response<AddUserResponse>> {
+    public class UserCommandHanlder : ResponseHandler, IRequestHandler<RegisterCommand, Response<AuthResult>>,
+                                                       IRequestHandler<AddUserCommand, Response<AddUserResponse>>,
+                                                       IRequestHandler<UpdateUserCommand, Response> {
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
@@ -113,6 +115,23 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
                 return BadRequest<AddUserResponse>($"An error occurred: {ex.Message}");
             }
         }
+
+        public async Task<Response> Handle(UpdateUserCommand request, CancellationToken cancellationToken) {
+            ApplicationUser? userFromDb = await _userManager.FindByIdAsync(request.Id.ToString());
+            if (userFromDb is null)
+                return NotFound("User not found");
+
+
+            var userMapped = _mapper.Map(request, userFromDb);
+            var updateResult = await _userManager.UpdateAsync(userMapped);
+            if (updateResult.Succeeded)
+                return Updated("User updated successfully");
+
+            return BadRequest("Update failed.");
+
+
+        }
+
 
 
     }
