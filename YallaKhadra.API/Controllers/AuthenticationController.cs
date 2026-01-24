@@ -106,6 +106,14 @@ namespace YallaKhadra.Controllers {
         }
 
 
+
+        [HttpPatch("change-password")]
+        public async Task<IActionResult> UpdatePassword([FromBody] ChangePasswordCommand command) {
+            var result = await Mediator.Send(command);
+            return NewResult(result);
+        }
+
+
         //helpers
         private void HandleRefreshToken(Response<AuthResult> result) {
             if (!result.Succeeded || result.Data?.RefreshToken is null)
@@ -125,6 +133,7 @@ namespace YallaKhadra.Controllers {
                 result.Data.RefreshToken = null;
             }
         }
+
     }
 
 

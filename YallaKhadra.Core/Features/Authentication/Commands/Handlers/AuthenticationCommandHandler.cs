@@ -17,7 +17,8 @@ namespace YallaKhadra.Core.Features.Authentication.Commands.Handlers;
 public class AuthenticationCommandHandler : ResponseHandler,
                                                          IRequestHandler<SignInCommand, Response<AuthResult>>,
                                                          IRequestHandler<RefreshTokenCommand, Response<AuthResult>>,
-                                                         IRequestHandler<LogoutCommand, Response<bool>> {
+                                                         IRequestHandler<LogoutCommand, Response<bool>>,
+                                                         IRequestHandler<ChangePasswordCommand, Response> {
 
 
     private readonly IMapper _mapper;
@@ -66,7 +67,7 @@ public class AuthenticationCommandHandler : ResponseHandler,
 
     public async Task<Response<AuthResult>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken) {
         try {
-            var authResult = await _authenticationService.ReAuthenticateAsync(request.RefreshToken, request.AccessToken);
+            var authResult = await _authenticationService.ReAuthenticateAsync(request.RefreshToken!, request.AccessToken);
 
             if (authResult.Status != ServiceOperationStatus.Succeeded || authResult.Data is null) {
                 return authResult.Status switch {
@@ -75,7 +76,7 @@ public class AuthenticationCommandHandler : ResponseHandler,
                 };
             }
 
-            var user = await _userManager.FindByIdAsync(authResult.Data.RefreshToken.UserId.ToString());
+            var user = await _userManager.FindByIdAsync(authResult.Data.RefreshToken!.UserId.ToString());
 
             authResult.Data.User = _mapper.Map<GetUserByIdResponse>(user);
             return Success(authResult.Data);
@@ -93,5 +94,26 @@ public class AuthenticationCommandHandler : ResponseHandler,
             _ => BadRequest<bool>(serviceResult.ErrorMessage ?? "Something went wrong")
 
         };
+    }
+
+    public async Task<Response> Handle(ChangePasswordCommand request, CancellationToken cancellationToken) {
+        var userId = _currentUserService.UserId;
+        if (userId is null)
+            return Unauthorized("User not found !");
+
+
+        var userFromDb = await _userManager.FindByIdAsync(userId.Value.ToString());
+        if (userFromDb is null)
+            return NotFound();
+
+        bool isUserPasswordCorrect = await _userManager.CheckPasswordAsync(userFromDb, request.CurrentPassword);
+        if (!isUserPasswordCorrect)
+            return Unauthorized("Current password is invalid.");
+
+        var result = await _userManager.ChangePasswordAsync(userFromDb, request.CurrentPassword, request.NewPassword);
+        if (result.Succeeded)
+            return Updated("Password updated successfully");
+
+        return BadRequest("Something went wrong while updating.");
     }
 }
