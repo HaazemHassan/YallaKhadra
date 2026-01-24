@@ -32,8 +32,8 @@
             };
         }
 
-        public Response<string> Created(string? message = null, object? Meta = null) {
-            return new Response<string>() {
+        public Response Created(string? message = null, object? Meta = null) {
+            return new Response() {
                 StatusCode = System.Net.HttpStatusCode.Created,
                 Succeeded = true,
                 Message = "Created Successfully",
@@ -42,8 +42,8 @@
         }
 
 
-        public Response<string> Updated<T>() {
-            return new Response<string>() {
+        public Response Updated<T>() {
+            return new Response() {
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Succeeded = true,
                 Message = "Updated Successfully"
@@ -68,9 +68,27 @@
             };
         }
 
+        public Response Deleted(string? message = null) {
+
+            return new Response() {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Succeeded = true,
+                Message = message ?? "Deleted Successfully"
+            };
+        }
+
 
         public Response<T> Unauthorized<T>(string? message = null) {
             return new Response<T>() {
+                StatusCode = System.Net.HttpStatusCode.Unauthorized,
+                Succeeded = false,
+                Message = message ?? "Unauthorized Access"
+            };
+        }
+
+
+        public Response Unauthorized(string? message = null) {
+            return new Response() {
                 StatusCode = System.Net.HttpStatusCode.Unauthorized,
                 Succeeded = false,
                 Message = message ?? "Unauthorized Access"
@@ -85,8 +103,24 @@
             };
         }
 
+        public Response Forbid(string? message = null) {
+            return new Response() {
+                StatusCode = System.Net.HttpStatusCode.Forbidden,
+                Succeeded = false,
+                Message = message ?? "Access Forbidden"
+            };
+        }
+
         public Response<T> BadRequest<T>(string? Message = null) {
             return new Response<T>() {
+                StatusCode = System.Net.HttpStatusCode.BadRequest,
+                Succeeded = false,
+                Message = Message == null ? "Bad Request" : Message
+            };
+        }
+
+        public Response BadRequest(string? Message = null) {
+            return new Response() {
                 StatusCode = System.Net.HttpStatusCode.BadRequest,
                 Succeeded = false,
                 Message = Message == null ? "Bad Request" : Message
@@ -101,8 +135,24 @@
             };
         }
 
+        public Response Conflict(string? Message = null) {
+            return new Response() {
+                StatusCode = System.Net.HttpStatusCode.Conflict,
+                Succeeded = false,
+                Message = Message ?? "Conflict"
+            };
+        }
+
         public Response<T> NotFound<T>(string? message = null) {
             return new Response<T>() {
+                StatusCode = System.Net.HttpStatusCode.NotFound,
+                Succeeded = false,
+                Message = message ?? "Not Found"
+            };
+        }
+
+        public Response NotFound(string? message = null) {
+            return new Response() {
                 StatusCode = System.Net.HttpStatusCode.NotFound,
                 Succeeded = false,
                 Message = message ?? "Not Found"

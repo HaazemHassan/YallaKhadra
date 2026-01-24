@@ -4,18 +4,15 @@ using YallaKhadra.Core.Entities;
 using YallaKhadra.Core.Entities.E_CommerceEntities;
 using YallaKhadra.Infrastructure.Data;
 
-namespace YallaKhadra.Services.Services
-{
+namespace YallaKhadra.Services.Services {
     public class ImageService<T> : IImageService<T>
-    where T : BaseImage, new()
-    {
+    where T : BaseImage, new() {
         private readonly ICloudinaryService _cloudinary;
         private readonly AppDbContext _context;
 
         public ImageService(
             ICloudinaryService cloudinary,
-            AppDbContext context)
-        {
+            AppDbContext context) {
             _cloudinary = cloudinary;
             _context = context;
         }
@@ -24,15 +21,13 @@ namespace YallaKhadra.Services.Services
             IFormFile file,
             int uploadedBy,
             int ownerId,
-            CancellationToken cancellationToken = default)
-        {
+            CancellationToken cancellationToken = default) {
             var folder = GetFolderName();
 
             var uploadResult = await _cloudinary
                 .UploadAsync(file, folder, cancellationToken);
 
-            var image = new T
-            {
+            var image = new T {
                 Url = uploadResult.Url,
                 PublicId = uploadResult.PublicId,
                 UploadedBy = uploadedBy,
@@ -48,18 +43,39 @@ namespace YallaKhadra.Services.Services
             return image;
         }
 
-        public async Task DeleteAsync(T image)
-        {
+        public async Task<T> UploadWithoutSaveAsync(
+            IFormFile file,
+            int uploadedBy,
+            int ownerId,
+            CancellationToken cancellationToken = default) {
+            var folder = GetFolderName();
+
+            var uploadResult = await _cloudinary
+                .UploadAsync(file, folder, cancellationToken);
+
+            var image = new T {
+                Url = uploadResult.Url,
+                PublicId = uploadResult.PublicId,
+                UploadedBy = uploadedBy,
+                UploadedAt = DateTime.UtcNow
+            };
+
+            SetOwner(image, ownerId);
+
+            _context.Set<T>().Add(image);
+
+            return image;
+        }
+
+        public async Task DeleteAsync(T image) {
             await _cloudinary.DeleteAsync(image.PublicId);
             _context.Set<T>().Remove(image);
             await _context.SaveChangesAsync();
         }
 
 
-        private static string GetFolderName()
-        {
-            return typeof(T).Name switch
-            {
+        private static string GetFolderName() {
+            return typeof(T).Name switch {
                 nameof(ReportImage) => "reports",
                 nameof(CleanupImage) => "cleanups",
                 nameof(WasteScanImage) => "WasteScanImages",
@@ -68,24 +84,22 @@ namespace YallaKhadra.Services.Services
             };
         }
 
-        private static void SetOwner(T image, int ownerId)
-        {
-            switch (image)
-            {
+        private static void SetOwner(T image, int ownerId) {
+            switch (image) {
                 case ReportImage reportImage:
-                    reportImage.ReportId = ownerId;
-                    break;
+                reportImage.ReportId = ownerId;
+                break;
                 case CleanupImage cleanupImage:
-                    cleanupImage.CleanupTaskId = ownerId;
-                    break;
+                cleanupImage.CleanupTaskId = ownerId;
+                break;
                 case WasteScanImage wasteScanImage:
-                    wasteScanImage.AIWasteScanId = ownerId;
-                    break;
+                wasteScanImage.AIWasteScanId = ownerId;
+                break;
                 case ProductImage productImage:
-                    productImage.ProductId= ownerId;
-                    break;
+                productImage.ProductId = ownerId;
+                break;
                 default:
-                    throw new InvalidOperationException("Unsupported image type");
+                throw new InvalidOperationException("Unsupported image type");
             }
         }
     }

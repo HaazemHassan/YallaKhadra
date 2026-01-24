@@ -2,12 +2,9 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using YallaKhadra.Core.Entities;
 
-namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations
-{
-    public class CleanupTaskConfiguration : IEntityTypeConfiguration<CleanupTask>
-    {
-        public void Configure(EntityTypeBuilder<CleanupTask> builder)
-        {
+namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations {
+    public class CleanupTaskConfiguration : IEntityTypeConfiguration<CleanupTask> {
+        public void Configure(EntityTypeBuilder<CleanupTask> builder) {
             // Relations
             builder.HasOne(x => x.Worker)
                    .WithMany()
@@ -24,6 +21,10 @@ namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations
                    .WithOne(x => x.CleanupTask)
                    .HasForeignKey(x => x.CleanupTaskId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Property(b => b.FinalWeightInKg)
+                .HasColumnType("decimal(18, 2)");
         }
     }
 }
+
