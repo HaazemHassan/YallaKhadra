@@ -18,6 +18,9 @@ namespace YallaKhadra.Core.Features.Products.Commands.Validators {
             RuleFor(x => x.Stock)
                 .GreaterThanOrEqualTo(0).WithMessage("Stock must be greater than or equal to 0");
 
+            RuleFor(x => x.CategoryId)
+                .GreaterThan(0).WithMessage("Category ID must be greater than 0");
+
             RuleFor(x => x.Images)
                 .NotNull().WithMessage("Images are required")
                 .Must(images => images != null && images.Count == 3)

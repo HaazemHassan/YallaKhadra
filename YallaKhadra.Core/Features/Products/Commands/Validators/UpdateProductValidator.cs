@@ -4,8 +4,6 @@ using YallaKhadra.Core.Features.Products.Commands.RequestModels;
 namespace YallaKhadra.Core.Features.Products.Commands.Validators {
     public class UpdateProductValidator : AbstractValidator<UpdateProductCommand> {
         public UpdateProductValidator() {
-            RuleFor(x => x.Id)
-                .GreaterThan(0).WithMessage("Product ID must be greater than 0");
 
             When(x => x.Name != null, () => {
                 RuleFor(x => x.Name)
@@ -29,6 +27,11 @@ namespace YallaKhadra.Core.Features.Products.Commands.Validators {
                     .GreaterThanOrEqualTo(0).WithMessage("Stock must be greater than or equal to 0");
             });
 
+            When(x => x.CategoryId.HasValue, () => {
+                RuleFor(x => x.CategoryId!.Value)
+                    .GreaterThan(0).WithMessage("Category ID must be greater than 0");
+            });
+
             When(x => x.Images != null && x.Images.Count > 0, () => {
                 RuleFor(x => x.Images)
                     .Must(images => images!.Count == 3)
@@ -46,10 +49,10 @@ namespace YallaKhadra.Core.Features.Products.Commands.Validators {
 
         private bool IsValidImageType(Microsoft.AspNetCore.Http.IFormFile file) {
             if (file == null) return false;
-            
+
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            
+
             return allowedExtensions.Contains(extension);
         }
     }

@@ -6,6 +6,10 @@
         public int Stock { get; set; }
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public int CategoryId { get; set; }
+
         public virtual ICollection<ProductImage> Images { get; set; } = new HashSet<ProductImage>();
+
+        public virtual Category Category { get; set; } = null!;
     }
 }
