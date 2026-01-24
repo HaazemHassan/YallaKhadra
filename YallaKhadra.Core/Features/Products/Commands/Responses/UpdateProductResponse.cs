@@ -1,5 +1,3 @@
-using YallaKhadra.Core.Features.Products.Commands.Responses;
-
 namespace YallaKhadra.Core.Features.Products.Commands.Responses {
     public class UpdateProductResponse {
         public int Id { get; set; }
@@ -9,6 +7,7 @@ namespace YallaKhadra.Core.Features.Products.Commands.Responses {
         public int Stock { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
+        public CategoryDto Category { get; set; }
         public List<ProductImageDto> Images { get; set; } = new();
     }
 }

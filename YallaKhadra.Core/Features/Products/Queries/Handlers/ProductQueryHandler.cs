@@ -2,7 +2,6 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using YallaKhadra.Core.Abstracts.ApiAbstracts;
 using YallaKhadra.Core.Abstracts.InfrastructureAbstracts;
 using YallaKhadra.Core.Abstracts.ServicesContracts;
 using YallaKhadra.Core.Bases.Responses;
@@ -32,7 +31,7 @@ namespace YallaKhadra.Core.Features.Products.Queries.Handlers {
             CancellationToken cancellationToken) {
             try {
                 var product = await _productService.GetByIdAsync(request.Id, cancellationToken);
-                
+
                 if (product is null)
                     return NotFound<GetProductByIdResponse>("Product not found.");
 
@@ -51,7 +50,13 @@ namespace YallaKhadra.Core.Features.Products.Queries.Handlers {
                 var productsQueryable = _productRepository
                     .GetTableNoTracking()
                     .Include(p => p.Images)
-                    .OrderByDescending(p => p.CreatedAt);
+                    .AsQueryable();
+
+                if (request.CategoryId.HasValue)
+                    productsQueryable = productsQueryable.Where(p => p.CategoryId == request.CategoryId.Value);
+
+
+                productsQueryable = productsQueryable.OrderByDescending(p => p.CreatedAt);
 
                 var productsPaginatedResult = await productsQueryable
                     .ProjectTo<GetProductsPaginatedResponse>(_mapper.ConfigurationProvider)

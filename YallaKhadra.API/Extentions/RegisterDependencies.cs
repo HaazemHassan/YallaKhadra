@@ -5,6 +5,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.RateLimiting;
+using YallaKhadra.Api.Filters;
 using YallaKhadra.API.Services;
 using YallaKhadra.Core;
 using YallaKhadra.Core.Abstracts.ApiAbstracts;
@@ -54,6 +55,7 @@ namespace YallaKhadra.API.Extentions {
                     Version = "v1",
                     Description = "API for YallaKhadra application"
                 });
+                options.OperationFilter<SwaggerExcludeOperationFilter>();
 
                 //options.EnableAnnotations();
 
@@ -83,6 +85,7 @@ namespace YallaKhadra.API.Extentions {
                     }
                 });
             });
+
 
             return services;
         }
@@ -220,8 +223,7 @@ namespace YallaKhadra.API.Extentions {
         }
 
 
-        private static IServiceCollection CloudnServiceConfiguations(this IServiceCollection services, IConfiguration configuration)
-        {
+        private static IServiceCollection CloudnServiceConfiguations(this IServiceCollection services, IConfiguration configuration) {
             services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
             return services;
         }

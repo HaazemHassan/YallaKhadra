@@ -30,6 +30,14 @@ namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations {
             builder.Property(p => p.CreatedAt)
                    .IsRequired();
 
+            builder.Property(p => p.CategoryId)
+                   .IsRequired(true);
+
+            builder.HasOne(p => p.Category)
+                   .WithMany(c => c.Products)
+                   .HasForeignKey(p => p.CategoryId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
             builder.HasMany(p => p.Images)
                    .WithOne(pi => pi.Product)
                    .HasForeignKey(pi => pi.ProductId)

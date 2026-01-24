@@ -37,7 +37,7 @@ namespace YallaKhadra.API.Controllers {
         /// <summary>
         /// Get all products with pagination
         /// </summary>
-        /// <param name="query">Pagination parameters including page number and page size</param>
+        /// <param name="query">Pagination parameters and optional category filter</param>
         /// <returns>Paginated list of products with their details</returns>
         /// <response code="200">Returns paginated list of products</response>
         /// <response code="400">Invalid pagination parameters</response>
@@ -75,13 +75,14 @@ namespace YallaKhadra.API.Controllers {
         /// <response code="400">Invalid input data or product update failed</response>
         /// <response code="404">Product not found</response>
         /// <response code="401">User is not authenticated</response>
-        [HttpPut("update")]
+        [HttpPatch("{Id}")]
         [Authorize(Roles = $"{nameof(UserRole.SuperAdmin)},{nameof(UserRole.Admin)}")]
         [ProducesResponseType(typeof(Response<UpdateProductResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> UpdateProduct([FromForm] UpdateProductCommand command) {
+        public async Task<IActionResult> UpdateProduct([FromRoute] int Id, [FromForm] UpdateProductCommand command) {
+            command.Id = Id;
             var result = await Mediator.Send(command);
             return NewResult(result);
         }

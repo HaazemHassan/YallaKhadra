@@ -9,6 +9,7 @@ public class ProductProfile : Profile {
     public ProductProfile() {
         CreateMap<Product, AddProductResponse>();
         CreateMap<ProductImage, ProductImageDto>();
+        CreateMap<Category, CategoryDto>();
 
         CreateMap<Product, GetProductByIdResponse>();
         CreateMap<Product, GetProductsPaginatedResponse>()

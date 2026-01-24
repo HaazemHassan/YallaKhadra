@@ -68,6 +68,7 @@ public static class InfrastructureDependencyRegisteration {
         services.AddTransient<ICleanupTaskRepository, CleanupTaskRepository>();
         services.AddTransient<IAIWasteScanRepository, AIWasteScanRepository>();
         services.AddTransient<IProductRepository, ProductRepository>();
+        services.AddTransient<ICategoryRepository, CategoryRepository>();
 
 
 

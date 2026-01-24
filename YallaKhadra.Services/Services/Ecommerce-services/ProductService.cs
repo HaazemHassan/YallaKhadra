@@ -60,6 +60,7 @@ namespace YallaKhadra.Services.Services.Ecommerce_services {
             return await _productRepository
                 .GetTableNoTracking(p => p.Id == id)
                 .Include(p => p.Images)
+                .Include(p => p.Category)
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
@@ -85,6 +86,7 @@ namespace YallaKhadra.Services.Services.Ecommerce_services {
             existingProduct.PointsCost = product.PointsCost;
             existingProduct.Stock = product.Stock;
             existingProduct.IsActive = product.IsActive;
+            existingProduct.CategoryId = product.CategoryId;
 
             if (images != null && images.Count == 3) {
                 var oldImages = existingProduct.Images.ToList();

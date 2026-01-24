@@ -9,6 +9,7 @@ namespace YallaKhadra.Core.Features.Products.Commands.RequestModels {
         public string Description { get; set; } = string.Empty;
         public int PointsCost { get; set; }
         public int Stock { get; set; }
+        public int CategoryId { get; set; }
         public List<IFormFile> Images { get; set; } = new();
     }
 }
