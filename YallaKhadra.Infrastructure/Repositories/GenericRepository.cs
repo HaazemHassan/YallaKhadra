@@ -40,6 +40,11 @@ namespace YallaKhadra.Infrastructure.Repositories {
             return entity;
         }
 
+        public virtual async Task<T> AddWithoutSaveAsync(T entity) {
+            await _dbContext.Set<T>().AddAsync(entity);
+            return entity;
+        }
+
         public virtual async Task UpdateAsync(T entity) {
             _dbContext.Set<T>().Update(entity);
             await _dbContext.SaveChangesAsync();

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using YallaKhadra.Core.Abstracts.ServicesContracts;
 using YallaKhadra.Services.Services;
+using YallaKhadra.Services.Services.Ecommerce_services;
 
 namespace YallaKhadra.Services {
     public static class ServicesDependencyRegisteration {
@@ -12,6 +13,7 @@ namespace YallaKhadra.Services {
             services.AddTransient<IPointsTransactionService, PointsTransactionService>();
             services.AddTransient<ICleanupTaskService, CleanupTaskService>();
             services.AddTransient<IAIWasteScanService, AIWasteScanService>();
+            services.AddTransient<IProductService, ProductService>();
             services.AddTransient<ICloudinaryService, CloudinaryService>();
             services.AddTransient(typeof(IImageService<>), typeof(ImageService<>));
 

@@ -40,7 +40,7 @@ namespace YallaKhadra.API {
             app.UseGuestSession();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.UseRateLimiter();    //must be after UseAuthentication and UseAuthorization be cause we are using user identity name in rate limiting policy
+            app.UseRateLimiter();    //must be after UseAuthentication and UseAuthorization because we are using user identity name in rate limiting policy
             app.MapControllers();
 
             app.Run();
