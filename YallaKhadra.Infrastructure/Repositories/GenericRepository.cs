@@ -51,9 +51,17 @@ namespace YallaKhadra.Infrastructure.Repositories {
 
         }
 
+        public virtual void UpdateWithoutSave(T entity) {
+            _dbContext.Set<T>().Update(entity);
+        }
+
         public virtual async Task DeleteAsync(T entity) {
             _dbContext.Set<T>().Remove(entity);
             await _dbContext.SaveChangesAsync();
+        }
+
+        public virtual void DeleteWithoutSave(T entity) {
+            _dbContext.Set<T>().Remove(entity);
         }
         public virtual async Task DeleteRangeAsync(ICollection<T> entities) {
             foreach (var entity in entities) {
