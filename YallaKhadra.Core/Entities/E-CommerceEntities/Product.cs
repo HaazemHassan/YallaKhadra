@@ -11,5 +11,25 @@
         public virtual ICollection<ProductImage> Images { get; set; } = new HashSet<ProductImage>();
 
         public virtual Category Category { get; set; } = null!;
+
+        // Rich Domain Model Methods
+        public bool HasSufficientStock(int quantity) {
+            return Stock >= quantity;
+        }
+
+        public void ReduceStock(int quantity) {
+            if (!HasSufficientStock(quantity))
+                throw new InvalidOperationException($"Insufficient stock for product: {Name}");
+
+            Stock -= quantity;
+        }
+
+        public void IncreaseStock(int quantity) {
+            Stock += quantity;
+        }
+
+        public bool IsAvailable() {
+            return IsActive && Stock > 0;
+        }
     }
 }

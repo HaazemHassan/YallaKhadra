@@ -127,5 +127,22 @@ namespace YallaKhadra.API.Controllers {
             var result = await Mediator.Send(command);
             return NewResult(result);
         }
+
+        /// <summary>
+        /// Sync cart items prices with current product prices
+        /// </summary>
+        /// <returns>Success message with count of updated items</returns>
+        /// <response code="200">Prices synced successfully</response>
+        /// <response code="404">Cart not found</response>
+        /// <response code="401">User is not authenticated</response>
+        [HttpPost("sync-prices")]
+        [ProducesResponseType(typeof(Response), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> SyncCartPrices() {
+            var command = new SyncCartPricesCommand();
+            var result = await Mediator.Send(command);
+            return NewResult(result);
+        }
     }
 }

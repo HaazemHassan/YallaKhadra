@@ -108,9 +108,11 @@ namespace YallaKhadra.Services.Services {
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<int> GetUserBalanceAsync(int userId, CancellationToken cancellationToken = default) {
-            var user = await _userManager.FindByIdAsync(userId.ToString());
-            return user?.PointsBalance ?? 0;
+        public async Task<int> GetUserBalanceAsync(int userId,CancellationToken cancellationToken = default) {  
+            return await _userManager.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.PointsBalance)
+                .FirstOrDefaultAsync(cancellationToken);
         }
     }
 }

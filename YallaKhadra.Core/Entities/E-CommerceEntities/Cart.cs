@@ -50,5 +50,9 @@ namespace YallaKhadra.Core.Entities.E_CommerceEntities {
         public void MarkAsUpdated() {
             UpdatedAt = DateTime.UtcNow;
         }
+
+        public bool IsProductExists(int productId) {
+            return Items.Any(i => i.ProductId == productId);
+        }
     }
 }

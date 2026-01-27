@@ -71,6 +71,7 @@ public static class InfrastructureDependencyRegisteration {
         services.AddTransient<ICategoryRepository, CategoryRepository>();
         services.AddTransient<ICartRepository, CartRepository>();
         services.AddTransient<ICartItemRepository, CartItemRepository>();
+        services.AddTransient<IOrderRepository, OrderRepository>();
 
 
 
