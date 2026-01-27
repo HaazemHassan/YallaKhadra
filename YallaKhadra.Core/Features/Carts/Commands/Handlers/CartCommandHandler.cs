@@ -13,7 +13,8 @@ namespace YallaKhadra.Core.Features.Carts.Commands.Handlers {
                                        IRequestHandler<UpdateCartItemQuantityCommand, Response<UpdateCartItemQuantityResponse>>,
                                        IRequestHandler<ToggleCartItemSelectionCommand, Response<ToggleCartItemSelectionResponse>>,
                                        IRequestHandler<RemoveFromCartCommand, Response>,
-                                       IRequestHandler<ClearCartCommand, Response> {
+                                       IRequestHandler<ClearCartCommand, Response>,
+                                       IRequestHandler<SyncCartPricesCommand, Response> {
 
         private readonly ICartRepository _cartRepository;
         private readonly ICartItemRepository _cartItemRepository;
@@ -64,6 +65,7 @@ namespace YallaKhadra.Core.Features.Carts.Commands.Handlers {
                 await _cartRepository.AddAsync(cart);
             }
 
+            bool itemExists = cart.IsProductExists(product.Id);    // used to determine response type
             cart.AddOrUpdateItem(product, request.Quantity);
 
             await _unitOfWork.SaveChangesAsync();
@@ -78,7 +80,8 @@ namespace YallaKhadra.Core.Features.Carts.Commands.Handlers {
                 TotalPoints = item.Quantity * item.PointsCost
             };
 
-            return Created(response);
+
+            return itemExists ? Success(response) : Created(response);
         }
 
         public async Task<Response<UpdateCartItemQuantityResponse>> Handle(
@@ -115,7 +118,7 @@ namespace YallaKhadra.Core.Features.Carts.Commands.Handlers {
                 return BadRequest<UpdateCartItemQuantityResponse>(ex.Message);
             }
 
-            await _cartItemRepository.UpdateAsync(cartItem);
+            _cartItemRepository.UpdateWithoutSave(cartItem);
             await _unitOfWork.SaveChangesAsync();
 
             var response = new UpdateCartItemQuantityResponse {
@@ -204,15 +207,46 @@ namespace YallaKhadra.Core.Features.Carts.Commands.Handlers {
             if (cart is null)
                 return NotFound("Cart not found.");
 
-            if (!cart.IsOwnedBy(userId.Value))
-                return Unauthorized("You don't have permission to clear this cart.");
-
             cart.ClearItems();
 
             _cartRepository.UpdateWithoutSave(cart);
             await _unitOfWork.SaveChangesAsync();
 
             return Success("Cart cleared successfully.");
+        }
+
+        public async Task<Response> Handle(
+            SyncCartPricesCommand request,
+            CancellationToken cancellationToken) {
+
+            var userId = _currentUserService.UserId;
+            if (userId is null)
+                return Unauthorized("User is not authenticated.");
+
+            var cart = await _cartRepository
+                .GetTableAsTracking(c => c.UserId == userId.Value)
+                .Include(c => c.Items)
+                    .ThenInclude(ci => ci.Product)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (cart is null)
+                return NotFound("Cart not found.");
+
+            int updatedCount = 0;
+            foreach (var item in cart.Items) {
+                if (item.HasPriceChanged(item.Product.PointsCost)) {
+                    item.SyncPrice(item.Product.PointsCost);
+                    updatedCount++;
+                }
+            }
+
+            if (updatedCount > 0) {
+                cart.MarkAsUpdated();
+                _cartRepository.UpdateWithoutSave(cart);
+                await _unitOfWork.SaveChangesAsync();
+            }
+
+            return Success($"{updatedCount} item(s) price updated successfully.");
         }
     }
 }

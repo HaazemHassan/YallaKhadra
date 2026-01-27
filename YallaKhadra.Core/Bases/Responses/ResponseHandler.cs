@@ -2,7 +2,7 @@
     public class ResponseHandler {
 
 
-        public Response<T> Success<T>(T? entity, object? Meta = null, string? message = null) {
+        public Response<T> Success<T>(T entity, object? Meta = null, string? message = null) {
             return new Response<T>() {
                 Data = entity,
                 StatusCode = System.Net.HttpStatusCode.OK,
@@ -11,6 +11,8 @@
                 Meta = Meta
             };
         }
+
+
 
         public Response<string> Success(object? Meta = null, string? message = null) {
             return new Response<string>() {

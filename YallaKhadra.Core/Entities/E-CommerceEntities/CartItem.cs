@@ -31,5 +31,17 @@
         public int CalculateTotalPoints() {
             return Quantity * PointsCost;
         }
+
+        public bool HasPriceChanged(int currentProductPrice) {
+            return PointsCost != currentProductPrice;
+        }
+
+        public void SyncPrice(int currentProductPrice) {
+            PointsCost = currentProductPrice;
+        }
+
+        public int CalculateTotalPointsWithCurrentPrice(int currentProductPrice) {
+            return Quantity * currentProductPrice;
+        }
     }
 }
