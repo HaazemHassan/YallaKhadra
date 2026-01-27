@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.GreenEntities;
 
 namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations
 {
@@ -8,7 +8,7 @@ namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations
     {
         public void Configure(EntityTypeBuilder<WasteScanImage> builder)
         {
-            builder.ToTable("WasteScanImages");
+            builder.ToTable("WasteScanImages", schema: "green");
 
             builder.HasOne(i => i.AIWasteScan)
                 .WithOne(s => s.WasteScanImage)

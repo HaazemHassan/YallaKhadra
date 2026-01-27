@@ -1,4 +1,5 @@
-﻿using YallaKhadra.Core.Enums;
+﻿using YallaKhadra.Core.Entities.BaseEntities;
+using YallaKhadra.Core.Enums;
 
 namespace YallaKhadra.Core.Entities.E_CommerceEntities {
     public class Order : BaseEntity<int> {

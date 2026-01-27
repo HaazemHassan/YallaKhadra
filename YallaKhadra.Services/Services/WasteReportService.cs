@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using YallaKhadra.Core.Abstracts.InfrastructureAbstracts;
 using YallaKhadra.Core.Abstracts.ServicesContracts;
 using YallaKhadra.Core.Bases;
-using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.GreenEntities;
 using YallaKhadra.Core.Enums;
 
 namespace YallaKhadra.Services.Services {

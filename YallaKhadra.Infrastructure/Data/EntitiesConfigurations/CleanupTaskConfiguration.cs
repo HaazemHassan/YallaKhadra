@@ -1,10 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.GreenEntities;
 
 namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations {
     public class CleanupTaskConfiguration : IEntityTypeConfiguration<CleanupTask> {
         public void Configure(EntityTypeBuilder<CleanupTask> builder) {
+            builder.ToTable("CleanupTasks", schema: "green");
+
             // Relations
             builder.HasOne(x => x.Worker)
                    .WithMany()

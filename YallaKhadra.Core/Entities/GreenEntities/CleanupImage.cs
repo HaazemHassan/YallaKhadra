@@ -1,4 +1,6 @@
-﻿namespace YallaKhadra.Core.Entities
+﻿using YallaKhadra.Core.Entities.BaseEntities;
+
+namespace YallaKhadra.Core.Entities.GreenEntities
 {
     public class CleanupImage : BaseImage
     {

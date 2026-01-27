@@ -1,4 +1,6 @@
-﻿namespace YallaKhadra.Core.Entities.E_CommerceEntities {
+﻿using YallaKhadra.Core.Entities.BaseEntities;
+
+namespace YallaKhadra.Core.Entities.E_CommerceEntities {
     public class CartItem : BaseEntity<int> {
         public int CartId { get; set; }
         public virtual Cart Cart { get; set; } = null!;

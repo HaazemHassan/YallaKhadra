@@ -1,5 +1,5 @@
 using AutoMapper;
-using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.GreenEntities;
 using YallaKhadra.Core.Enums;
 using YallaKhadra.Core.Features.WasteReports.Commands.RequestModels;
 using YallaKhadra.Core.Features.WasteReports.Queries.Responses;

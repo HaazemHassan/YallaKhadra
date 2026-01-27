@@ -1,5 +1,5 @@
 using AutoMapper;
-using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.GreenEntities;
 using YallaKhadra.Core.Features.AIWasteScans.Queries.Responses;
 
 namespace YallaKhadra.Core.Mapping.AIWasteScans {

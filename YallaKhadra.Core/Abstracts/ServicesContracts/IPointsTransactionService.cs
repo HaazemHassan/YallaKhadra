@@ -1,5 +1,5 @@
 using YallaKhadra.Core.Bases;
-using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.PointsEntities;
 using YallaKhadra.Core.Enums;
 
 namespace YallaKhadra.Core.Abstracts.ServicesContracts {

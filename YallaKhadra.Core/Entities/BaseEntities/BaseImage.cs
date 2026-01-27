@@ -1,4 +1,4 @@
-﻿namespace YallaKhadra.Core.Entities
+﻿namespace YallaKhadra.Core.Entities.BaseEntities
 {
     public abstract class BaseImage : BaseEntity<int>
     {

@@ -1,4 +1,5 @@
-﻿using YallaKhadra.Core.Entities.IdentityEntities;
+﻿using YallaKhadra.Core.Entities.BaseEntities;
+using YallaKhadra.Core.Entities.IdentityEntities;
 
 namespace YallaKhadra.Core.Entities.E_CommerceEntities {
     public class Cart : BaseEntity<int> {

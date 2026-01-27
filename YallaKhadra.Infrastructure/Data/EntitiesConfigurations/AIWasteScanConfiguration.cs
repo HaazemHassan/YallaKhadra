@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.GreenEntities;
 
 namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations
 {
@@ -8,6 +8,8 @@ namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations
     {
         public void Configure(EntityTypeBuilder<AIWasteScan> builder)
         {
+            builder.ToTable("AIWasteScans", schema: "green");
+
             builder.HasKey(e => e.Id);
 
             builder.Property(e => e.AIPredictedType)

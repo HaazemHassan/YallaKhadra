@@ -1,4 +1,6 @@
-﻿namespace YallaKhadra.Core.Entities.E_CommerceEntities {
+﻿using YallaKhadra.Core.Entities.BaseEntities;
+
+namespace YallaKhadra.Core.Entities.E_CommerceEntities {
     public class OrderItem : BaseEntity<int> {
         public int OrderId { get; set; }
         public virtual Order Order { get; set; } = null!;

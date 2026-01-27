@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using YallaKhadra.Core.Entities.PointsEntities;
 
 namespace YallaKhadra.Core.Entities.IdentityEntities {
     public class ApplicationUser : IdentityUser<int> {

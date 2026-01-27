@@ -1,4 +1,6 @@
-﻿namespace YallaKhadra.Core.Entities.E_CommerceEntities {
+﻿using YallaKhadra.Core.Entities.BaseEntities;
+
+namespace YallaKhadra.Core.Entities.E_CommerceEntities {
     public class ProductImage : BaseImage {
         public bool IsMain { get; set; } = false;
         public int ProductId { get; set; }
