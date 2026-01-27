@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using YallaKhadra.Core.Bases;
-using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.GreenEntities;
 
 namespace YallaKhadra.Core.Abstracts.ServicesContracts {
     public interface ICleanupTaskService {

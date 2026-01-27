@@ -1,4 +1,4 @@
-﻿using YallaKhadra.Core.Entities;
+﻿using YallaKhadra.Core.Entities.BaseEntities;
 
 namespace YallaKhadra.Core.Entities.E_CommerceEntities {
     public class OrderShippingDetails : BaseEntity<int> {

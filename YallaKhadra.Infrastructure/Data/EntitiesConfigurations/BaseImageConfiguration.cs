@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.BaseEntities;
 
 namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations
 {

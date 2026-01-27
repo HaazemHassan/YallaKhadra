@@ -1,7 +1,8 @@
-﻿using YallaKhadra.Core.Entities.IdentityEntities;
+﻿using YallaKhadra.Core.Entities.BaseEntities;
+using YallaKhadra.Core.Entities.IdentityEntities;
 using YallaKhadra.Core.Enums;
 
-namespace YallaKhadra.Core.Entities
+namespace YallaKhadra.Core.Entities.PointsEntities
 {
     public class PointsTransaction : BaseEntity<int>
     {

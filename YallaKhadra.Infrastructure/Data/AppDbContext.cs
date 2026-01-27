@@ -2,9 +2,11 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
-using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.BaseEntities;
 using YallaKhadra.Core.Entities.E_CommerceEntities;
+using YallaKhadra.Core.Entities.GreenEntities;
 using YallaKhadra.Core.Entities.IdentityEntities;
+using YallaKhadra.Core.Entities.PointsEntities;
 
 namespace YallaKhadra.Infrastructure.Data {
     public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, int, IdentityUserClaim<int>, IdentityUserRole<int>, IdentityUserLogin<int>, IdentityRoleClaim<int>, IdentityUserToken<int>> {
@@ -31,6 +33,11 @@ namespace YallaKhadra.Infrastructure.Data {
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
+            modelBuilder.Entity<IdentityUserClaim<int>>().ToTable("AspNetUserClaims", schema: "identity");
+            modelBuilder.Entity<IdentityUserRole<int>>().ToTable("AspNetUserRoles", schema: "identity");
+            modelBuilder.Entity<IdentityUserLogin<int>>().ToTable("AspNetUserLogins", schema: "identity");
+            modelBuilder.Entity<IdentityRoleClaim<int>>().ToTable("AspNetRoleClaims", schema: "identity");
+            modelBuilder.Entity<IdentityUserToken<int>>().ToTable("AspNetUserTokens", schema: "identity");
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.BaseEntities;
 
 namespace YallaKhadra.Core.Abstracts.ServicesContracts {
     public interface IImageService<T> where T : BaseImage {

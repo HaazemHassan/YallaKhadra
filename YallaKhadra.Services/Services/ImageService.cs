@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using YallaKhadra.Core.Abstracts.ServicesContracts;
-using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.BaseEntities;
 using YallaKhadra.Core.Entities.E_CommerceEntities;
+using YallaKhadra.Core.Entities.GreenEntities;
 using YallaKhadra.Infrastructure.Data;
 
 namespace YallaKhadra.Services.Services {

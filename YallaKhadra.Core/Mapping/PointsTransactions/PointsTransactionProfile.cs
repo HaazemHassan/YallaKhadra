@@ -1,5 +1,5 @@
 using AutoMapper;
-using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.PointsEntities;
 using YallaKhadra.Core.Features.PointsTransactions.Queries.Responses;
 
 namespace YallaKhadra.Core.Mapping.PointsTransactions {

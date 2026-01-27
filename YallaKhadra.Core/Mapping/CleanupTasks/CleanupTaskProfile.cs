@@ -1,5 +1,5 @@
 using AutoMapper;
-using YallaKhadra.Core.Entities;
+using YallaKhadra.Core.Entities.GreenEntities;
 using YallaKhadra.Core.Features.CleanupTasks.Queries.Responses;
 
 namespace YallaKhadra.Core.Mapping.CleanupTasks {

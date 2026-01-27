@@ -1,6 +1,7 @@
-﻿using YallaKhadra.Core.Entities.IdentityEntities;
+﻿using YallaKhadra.Core.Entities.BaseEntities;
+using YallaKhadra.Core.Entities.IdentityEntities;
 
-namespace YallaKhadra.Core.Entities
+namespace YallaKhadra.Core.Entities.GreenEntities
 {
     public class AIWasteScan:BaseEntity<int>
     {

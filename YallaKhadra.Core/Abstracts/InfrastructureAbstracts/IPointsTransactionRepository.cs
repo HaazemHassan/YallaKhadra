@@ -1,4 +1,4 @@
-﻿using YallaKhadra.Core.Entities;
+﻿using YallaKhadra.Core.Entities.PointsEntities;
 
 namespace YallaKhadra.Core.Abstracts.InfrastructureAbstracts
 {

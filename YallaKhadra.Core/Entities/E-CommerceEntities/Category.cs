@@ -1,4 +1,6 @@
-﻿namespace YallaKhadra.Core.Entities.E_CommerceEntities {
+﻿using YallaKhadra.Core.Entities.BaseEntities;
+
+namespace YallaKhadra.Core.Entities.E_CommerceEntities {
     public class Category : BaseEntity<int> {
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
