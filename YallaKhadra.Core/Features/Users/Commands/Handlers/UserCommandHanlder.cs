@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using YallaKhadra.Core.Abstracts.ApiAbstracts;
 using YallaKhadra.Core.Abstracts.InfrastructureAbstracts;
 using YallaKhadra.Core.Abstracts.ServicesContracts;
@@ -23,19 +24,22 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ICurrentUserService _currentUserService;
         private readonly IAuthenticationService _authenticationService;
+        private readonly IImageService<UserProfileImage> _imageService;
 
-        public UserCommandHanlder(IUnitOfWork unitOfWork, IMapper mapper, IApplicationUserService applicationUserService, ICurrentUserService currentUserService, UserManager<ApplicationUser> userManager, IAuthenticationService authenticationService) {
+        public UserCommandHanlder(IUnitOfWork unitOfWork, IMapper mapper, IApplicationUserService applicationUserService, ICurrentUserService currentUserService, UserManager<ApplicationUser> userManager, IAuthenticationService authenticationService, IImageService<UserProfileImage> imageService) {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _applicationUserService = applicationUserService;
             _currentUserService = currentUserService;
             _userManager = userManager;
             _authenticationService = authenticationService;
+            _imageService = imageService;
         }
 
 
         public async Task<Response<AuthResult>> Handle(RegisterCommand request, CancellationToken cancellationToken) {
             await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
+            UserProfileImage? uploadedImage = null;
             try {
                 var userMapped = _mapper.Map<ApplicationUser>(request);
                 var addUserResult = await _applicationUserService.AddUser(userMapped, request.Password);
@@ -52,11 +56,33 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
                 var user = addUserResult.Data;
 
                 var addToRoleResult = await _userManager.AddToRoleAsync(user, UserRole.User.ToString());
-                if (!addToRoleResult.Succeeded)
+                if (!addToRoleResult.Succeeded) {
+                    await _unitOfWork.RollbackAsync();
                     return BadRequest<AuthResult>("Failed to assign user to role");
+                }
 
-                var authResult = await _authenticationService.AuthenticateAsync(user);
+                // Upload profile image if provided
+                if (request.ProfileImage != null && request.ProfileImage.Length > 0) {
+                    uploadedImage = await _imageService.UploadWithoutSaveAsync(
+                        request.ProfileImage,
+                        user.Id,
+                        user.Id,
+                        cancellationToken);
+
+                    user.ProfileImageId = uploadedImage.Id;
+                    await _userManager.UpdateAsync(user);
+                    
+                    // Reload user with ProfileImage
+                    user = await _userManager.Users
+                        .Include(u => u.ProfileImage)
+                        .FirstOrDefaultAsync(u => u.Id == user.Id, cancellationToken);
+                }
+
+                var authResult = await _authenticationService.AuthenticateAsync(user!);
                 if (authResult.Status != ServiceOperationStatus.Succeeded || authResult.Data is null) {
+                    if (uploadedImage != null) {
+                        await _imageService.DeleteAsync(uploadedImage);
+                    }
                     await _unitOfWork.RollbackAsync();
                     return BadRequest<AuthResult>(authResult.ErrorMessage);
                 }
@@ -66,6 +92,9 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
                 return Created(authResult.Data);
             }
             catch (Exception ex) {
+                if (uploadedImage != null) {
+                    await _imageService.DeleteAsync(uploadedImage);
+                }
                 await _unitOfWork.RollbackAsync();
                 return BadRequest<AuthResult>($"An error occurred: {ex.Message}");
             }
@@ -105,8 +134,12 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
                     return BadRequest<AddUserResponse>("Failed to assign user to role");
                 }
 
+                // Reload user with ProfileImage
+                var userWithImage = await _userManager.Users
+                    .Include(u => u.ProfileImage)
+                    .FirstOrDefaultAsync(u => u.Id == addedUser.Id, cancellationToken);
 
-                var response = _mapper.Map<AddUserResponse>(addedUser);
+                var response = _mapper.Map<AddUserResponse>(userWithImage);
                 await _unitOfWork.CommitAsync();
                 return Created(response);
             }

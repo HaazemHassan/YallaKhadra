@@ -34,7 +34,7 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> Register([FromBody] RegisterCommand command) {
+        public async Task<IActionResult> Register([FromForm] RegisterCommand command) {
             var result = await Mediator.Send(command);
             return NewResult(result);
         }

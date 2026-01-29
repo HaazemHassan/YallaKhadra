@@ -10,8 +10,14 @@ namespace YallaKhadra.Core.Features.Users {
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public int PointsBalance { get; set; }
+        public UserProfileImageDto? ProfileImage { get; set; }
 
 
 
+    }
+
+    public class UserProfileImageDto {
+        public int Id { get; set; }
+        public string Url { get; set; } = string.Empty;
     }
 }

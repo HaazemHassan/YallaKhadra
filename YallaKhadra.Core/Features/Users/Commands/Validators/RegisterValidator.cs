@@ -46,6 +46,14 @@ namespace YallaKhadra.Core.Features.Users.Commands.Validators {
             RuleFor(x => x.PhoneNumber)
                 .Matches(expression: @"^\+?[0-9]\d{1,14}$")
                 .WithMessage("Phone number is not valid.");
+
+            RuleFor(x => x.ProfileImage)
+                .Must(file => file == null || file.Length > 0)
+                .WithMessage("Profile image file is empty")
+                .Must(file => file == null || file.Length <= 5 * 1024 * 1024)
+                .WithMessage("Profile image size must not exceed 5MB")
+                .Must(file => file == null || new[] { "image/jpeg", "image/jpg", "image/png" }.Contains(file.ContentType))
+                .WithMessage("Profile image must be a valid image file (JPEG, JPG, or PNG)");
         }
     }
 }

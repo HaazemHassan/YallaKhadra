@@ -3,6 +3,7 @@ using YallaKhadra.Core.Abstracts.ServicesContracts;
 using YallaKhadra.Core.Entities.BaseEntities;
 using YallaKhadra.Core.Entities.E_CommerceEntities;
 using YallaKhadra.Core.Entities.GreenEntities;
+using YallaKhadra.Core.Entities.IdentityEntities;
 using YallaKhadra.Infrastructure.Data;
 
 namespace YallaKhadra.Services.Services {
@@ -81,6 +82,7 @@ namespace YallaKhadra.Services.Services {
                 nameof(CleanupImage) => "cleanups",
                 nameof(WasteScanImage) => "WasteScanImages",
                 nameof(ProductImage) => "ProductImage",
+                nameof(UserProfileImage) => "UserProfiles",
                 _ => "others"
             };
         }
@@ -98,6 +100,9 @@ namespace YallaKhadra.Services.Services {
                 break;
                 case ProductImage productImage:
                 productImage.ProductId = ownerId;
+                break;
+                case UserProfileImage userProfileImage:
+                userProfileImage.UserId = ownerId;
                 break;
                 default:
                 throw new InvalidOperationException("Unsupported image type");

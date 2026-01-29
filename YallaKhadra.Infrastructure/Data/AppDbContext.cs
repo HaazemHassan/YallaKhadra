@@ -28,6 +28,7 @@ namespace YallaKhadra.Infrastructure.Data {
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<OrderShippingDetails> OrderShippingDetails { get; set; }
+        public DbSet<UserProfileImage> UserProfileImages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
             base.OnModelCreating(modelBuilder);
