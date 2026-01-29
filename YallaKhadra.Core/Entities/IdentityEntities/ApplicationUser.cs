@@ -13,7 +13,9 @@ namespace YallaKhadra.Core.Entities.IdentityEntities {
         public string? Address { get; set; }
         public int PointsBalance { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public int? ProfileImageId { get; set; }
 
+        public virtual UserProfileImage? ProfileImage { get; set; }
         public virtual ICollection<RefreshToken> RefreshTokens { get; set; }
         public virtual ICollection<PointsTransaction> PointsTransactions { get; set; }
 

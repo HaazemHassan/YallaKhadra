@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Http;
 using YallaKhadra.Core.Bases.Authentication;
 using YallaKhadra.Core.Bases.Responses;
 
@@ -11,6 +12,7 @@ namespace YallaKhadra.Core.Features.Users.Commands.RequestModels {
         public string ConfirmPassword { get; set; }
         public string? Address { get; set; }
         public string? PhoneNumber { get; set; }
+        public IFormFile? ProfileImage { get; set; }
 
     }
 }

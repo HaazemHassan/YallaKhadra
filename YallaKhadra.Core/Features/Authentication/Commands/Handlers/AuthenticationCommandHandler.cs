@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using YallaKhadra.Core.Abstracts.ApiAbstracts;
 using YallaKhadra.Core.Abstracts.InfrastructureAbstracts;
 using YallaKhadra.Core.Abstracts.ServicesContracts;
@@ -42,7 +43,10 @@ public class AuthenticationCommandHandler : ResponseHandler,
 
     public async Task<Response<AuthResult>> Handle(SignInCommand request, CancellationToken cancellationToken) {
         try {
-            var userFromDb = await _userManager.FindByEmailAsync(request.Email);
+            var userFromDb = await _userManager.Users
+                .Include(u => u.ProfileImage)
+                .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
+                
             if (userFromDb is null)
                 return Unauthorized<AuthResult>("Invalid Email or password");
 
@@ -76,7 +80,9 @@ public class AuthenticationCommandHandler : ResponseHandler,
                 };
             }
 
-            var user = await _userManager.FindByIdAsync(authResult.Data.RefreshToken!.UserId.ToString());
+            var user = await _userManager.Users
+                .Include(u => u.ProfileImage)
+                .FirstOrDefaultAsync(u => u.Id == authResult.Data.RefreshToken!.UserId, cancellationToken);
 
             authResult.Data.User = _mapper.Map<GetUserByIdResponse>(user);
             return Success(authResult.Data);

@@ -6,7 +6,9 @@ namespace YallaKhadra.Core.Mapping.Users {
     public partial class UserProfile {
         public void AddUserMapping() {
             CreateMap<AddUserCommand, ApplicationUser>();
-            CreateMap<ApplicationUser, AddUserResponse>();
+            CreateMap<ApplicationUser, AddUserResponse>()
+                .ForMember(dest => dest.ProfileImage,
+                   opt => opt.MapFrom(src => src.ProfileImage));
 
         }
     }

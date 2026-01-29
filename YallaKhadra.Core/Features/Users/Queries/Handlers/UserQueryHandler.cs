@@ -2,6 +2,7 @@
 using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using YallaKhadra.Core.Abstracts.ApiAbstracts;
 using YallaKhadra.Core.Abstracts.ServicesContracts;
 using YallaKhadra.Core.Bases.Responses;
@@ -28,7 +29,7 @@ namespace YallaKhadra.Core.Features.Users.Queries.Handlers {
 
         public async Task<PaginatedResult<GetUsersPaginatedResponse>> Handle(GetUsersPaginatedQuery request, CancellationToken cancellationToken) {
             try {
-                var usersQuerable = _userManager.Users;
+                var usersQuerable = _userManager.Users.Include(u => u.ProfileImage);
                 var usersPaginatedResult = await usersQuerable.ProjectTo<GetUsersPaginatedResponse>(_mapper.ConfigurationProvider)
                                     .ToPaginatedResultAsync(request.PageNumber, request.PageSize);
                 return usersPaginatedResult;
@@ -40,7 +41,10 @@ namespace YallaKhadra.Core.Features.Users.Queries.Handlers {
 
         public async Task<Response<GetUserByIdResponse>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken) {
             try {
-                var user = await _userManager.FindByIdAsync(request.Id.ToString());
+                var user = await _userManager.Users
+                    .Include(u => u.ProfileImage)
+                    .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);
+                    
                 if (user is null)
                     return NotFound<GetUserByIdResponse>();
 

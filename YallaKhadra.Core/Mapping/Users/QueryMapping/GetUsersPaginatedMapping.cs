@@ -6,7 +6,9 @@ namespace YallaKhadra.Core.Mapping.Users {
         public void GetUsersPaginatedMapping() {
             CreateMap<ApplicationUser, GetUsersPaginatedResponse>()
                 .ForMember(dest => dest.Phone,
-                   opt => opt.MapFrom(src => src.PhoneNumber));
+                   opt => opt.MapFrom(src => src.PhoneNumber))
+                .ForMember(dest => dest.ProfileImage,
+                   opt => opt.MapFrom(src => src.ProfileImage));
 
         }
     }
