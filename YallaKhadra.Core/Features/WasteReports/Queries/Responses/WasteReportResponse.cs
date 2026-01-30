@@ -1,4 +1,5 @@
 using YallaKhadra.Core.Enums;
+using YallaKhadra.Core.Features.CleanupTasks.Queries.Responses;
 
 namespace YallaKhadra.Core.Features.WasteReports.Queries.Responses {
     public class WasteReportResponse {
@@ -12,6 +13,12 @@ namespace YallaKhadra.Core.Features.WasteReports.Queries.Responses {
         public int UserId { get; set; }
         public string? UserName { get; set; }
         public List<ReportImageDto> Images { get; set; } = new List<ReportImageDto>();
+        
+        // Cleanup Task Details (populated when Status = Done)
+        public WasteType? FinalWasteType { get; set; }
+        public string? FinalWasteTypeName { get; set; }
+        public decimal? FinalWeightInKg { get; set; }
+        public List<CleanupImageDto> CleanupImages { get; set; } = new List<CleanupImageDto>();
     }
 
     public class ReportImageDto {
