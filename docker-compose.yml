@@ -1,0 +1,33 @@
+name: yallakhadra-api
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: yallakhadra-sqlserver
+    networks:
+      - yallakhadra-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${DB_PASSWORD} -C -Q 'SELECT 1' || exit 1",
+        ]
+      interval: 10s
+      retries: 5
+      start_period: 20s
+
+  yallakhadra-api:
+    image: ${DOCKER_REGISTRY-}yallakhadra-api:${IMAGE_TAG:-latest}
+    container_name: yallakhadra-api-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - yallakhadra-network
+
+networks:
+  yallakhadra-network:
+    driver: bridge
