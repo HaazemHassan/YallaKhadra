@@ -72,6 +72,23 @@ namespace YallaKhadra.API.Controllers {
         }
 
         /// <summary>
+        /// Get current user's waste reports with pagination and optional status filter (first image only)
+        /// </summary>
+        /// <param name="query">Pagination and filter parameters (page number, page size, optional status)</param>
+        /// <returns>Paginated list of user's reports with only the first image, ordered by date (newest first)</returns>
+        /// <response code="200">Returns paginated list of user's reports</response>
+        /// <response code="400">Invalid pagination parameters</response>
+        /// <response code="401">User is not authenticated</response>
+        [HttpGet("my")]
+        [ProducesResponseType(typeof(PaginatedResult<WasteReportResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetMyReports([FromQuery] GetMyReportsQuery query) {
+            var result = await Mediator.Send(query);
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Get waste reports near a specific location within a given radius
         /// </summary>
         /// <param name="query">Location coordinates (latitude, longitude) and search radius in kilometers</param>
@@ -101,7 +118,7 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(typeof(Response<WasteReportResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.SuperAdmin)},{nameof(UserRole.Worker)}")]
+        [Authorize]
         public async Task<IActionResult> GetWasteReportById([FromRoute] int id) {
             var query = new GetWasteReportByIdQuery { Id = id };
             var result = await Mediator.Send(query);
