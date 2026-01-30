@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using YallaKhadra.API.Bases.DataSeeding;
 using YallaKhadra.API.Extentions;
 using YallaKhadra.API.Middlewares;
 using YallaKhadra.Core.Entities.IdentityEntities;
+using YallaKhadra.Infrastructure.Data;
 
 namespace YallaKhadra.API {
     public class Program {
@@ -18,6 +21,26 @@ namespace YallaKhadra.API {
 
             #region Initialize Database
             using (var scope = app.Services.CreateScope()) {
+
+                var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                // needed to dockerize the application and have the DB created automatically       
+                if (app.Environment.IsDevelopment()) {
+                    try {
+                        await context.Database.EnsureCreatedAsync();
+                        await context.Database.MigrateAsync();
+                    }
+                    catch (SqlException ex) when (ex.Number == 2714) {
+                        Console.WriteLine("Tables already exist, skipping migration");
+                    }
+                    catch (Exception ex) {
+                        Console.WriteLine($"Database migration error: {ex.Message}");
+                        throw;
+                    }
+                }
+                //
+
+
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
 

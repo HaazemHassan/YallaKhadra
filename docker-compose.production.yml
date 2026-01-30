@@ -1,0 +1,70 @@
+# Usage:
+#   1. Create a .env file with your configuration (see .env.example)
+#   2. Run: docker-compose -f docker-compose.production.yml up -d
+#   3. Access the app at http://localhost:44000
+
+name: yallakhadra-production
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: yallakhadra-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${DB_PASSWORD}
+      - MSSQL_PID=Express
+      - MSSQL_TCP_PORT=1433
+    ports:
+      - "${DB_EXTERNAL_PORT:-15000}:1433"
+    volumes:
+      - yallakhadra_sqlserver_data:/var/opt/mssql
+    networks:
+      - yallakhadra-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${DB_PASSWORD} -C -Q 'SELECT 1' || exit 1",
+        ]
+      interval: 10s
+      retries: 10
+      start_period: 30s
+      timeout: 5s
+    restart: unless-stopped
+
+  yallakhadra-api:
+    image: hazemhassan1/yallakhadra-api:latest
+    container_name: yallakhadra-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=${DB_SERVER:-sqlserver},${DB_PORT:-1433};Database=${DB_NAME};User Id=${DB_USER};Password=${DB_PASSWORD};TrustServerCertificate=True;
+      - jwtSettings__Secret=${JWT_SECRET}
+      - jwtSettings__Issuer=${JWT_ISSUER}
+      - jwtSettings__Audience=${JWT_AUDIENCE}
+      - jwtSettings__ValidateAudience=${JWT_VALIDATE_AUDIENCE:-false}
+      - jwtSettings__ValidateIssuer=${JWT_VALIDATE_ISSUER:-true}
+      - jwtSettings__ValidateLifetime=${JWT_VALIDATE_LIFETIME:-true}
+      - jwtSettings__ValidateIssuerSigningKey=${JWT_VALIDATE_ISSUER_SIGNING_KEY:-true}
+      - jwtSettings__AccessTokenExpirationMinutes=${JWT_ACCESS_TOKEN_EXPIRATION_MINUTES:-43200}
+      - jwtSettings__RefreshTokenExpirationDays=${JWT_REFRESH_TOKEN_EXPIRATION_DAYS:-30}
+      - CloudinarySettings__CloudName=${CLOUDINARY_CLOUD_NAME}
+      - CloudinarySettings__ApiKey=${CLOUDINARY_API_KEY}
+      - CloudinarySettings__ApiSecret=${CLOUDINARY_API_SECRET}
+    ports:
+      - "${API_EXTERNAL_PORT:-44000}:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - yallakhadra-network
+    restart: unless-stopped
+
+networks:
+  yallakhadra-network:
+    driver: bridge
+
+volumes:
+  yallakhadra_sqlserver_data:
+    name: yallakhadra_sqlserver_data
+    driver: local
