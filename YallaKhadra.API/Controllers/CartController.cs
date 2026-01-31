@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using YallaKhadra.API.Bases;
 using YallaKhadra.Core.Bases.Responses;
+using YallaKhadra.Core.Enums;
 using YallaKhadra.Core.Features.Carts.Commands.RequestModels;
 using YallaKhadra.Core.Features.Carts.Commands.Responses;
 using YallaKhadra.Core.Features.Carts.Queries.Models;
@@ -11,8 +12,7 @@ namespace YallaKhadra.API.Controllers {
     /// <summary>
     /// Shopping cart controller for managing user cart operations
     /// </summary>
-    [ApiController]
-    [Authorize]
+    [Authorize(Roles = nameof(UserRole.User))]
     public class CartController : BaseController {
 
         /// <summary>

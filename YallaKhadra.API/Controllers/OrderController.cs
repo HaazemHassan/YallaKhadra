@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using YallaKhadra.API.Bases;
 using YallaKhadra.Core.Bases.Responses;
+using YallaKhadra.Core.Enums;
 using YallaKhadra.Core.Features.Orders.Commands.RequestModels;
 using YallaKhadra.Core.Features.Orders.Commands.Responses;
 using YallaKhadra.Core.Features.Orders.Queries.Models;
@@ -11,8 +12,7 @@ namespace YallaKhadra.API.Controllers {
     /// <summary>
     /// Orders controller for managing user orders and checkout
     /// </summary>
-    [ApiController]
-    [Authorize]
+    [Authorize(Roles = nameof(UserRole.User))]
     public class OrderController : BaseController {
 
         /// <summary>

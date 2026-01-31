@@ -12,8 +12,6 @@ namespace YallaKhadra.API.Controllers {
     /// <summary>
     /// Category management controller for e-commerce operations
     /// </summary>
-    [ApiController]
-    [Produces("application/json")]
     public class CategoryController : BaseController {
 
         /// <summary>

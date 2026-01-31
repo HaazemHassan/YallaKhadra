@@ -10,9 +10,6 @@ namespace YallaKhadra.API.Controllers {
     /// <summary>
     /// Points Transaction controller for managing user points and transaction history
     /// </summary>
-    [ApiController]
-    [Authorize]
-    [Produces("application/json")]
     [Authorize(Roles = nameof(UserRole.User))]
     public class PointsTransactionController : BaseController {
 

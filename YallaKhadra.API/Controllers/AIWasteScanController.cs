@@ -11,9 +11,7 @@ namespace YallaKhadra.API.Controllers {
     /// <summary>
     /// AI Waste Scan controller for waste identification using AI
     /// </summary>
-    [ApiController]
     [Authorize]
-    [Produces("application/json")]
     public class AIWasteScanController : BaseController {
 
         /// <summary>

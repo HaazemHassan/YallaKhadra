@@ -13,6 +13,7 @@ namespace YallaKhadra.API.Bases {
         private IMediator _mediatorInstance;
         protected IMediator Mediator => _mediatorInstance ??= HttpContext.RequestServices.GetService<IMediator>()!;
 
+
         #region Actions
         protected ObjectResult NewResult<T>(Response<T> response) {
             switch (response.StatusCode) {

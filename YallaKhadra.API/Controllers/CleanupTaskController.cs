@@ -11,8 +11,6 @@ namespace YallaKhadra.API.Controllers {
     /// <summary>
     /// Cleanup Task controller for managing waste cleanup assignments and completion
     /// </summary>
-    [ApiController]
-    [Produces("application/json")]
     public class CleanupTaskController : BaseController {
 
         /// <summary>
