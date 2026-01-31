@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Net;
@@ -6,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.RateLimiting;
 using YallaKhadra.Api.Filters;
+using YallaKhadra.API.Auhtorization;
 using YallaKhadra.API.Services;
 using YallaKhadra.Core;
 using YallaKhadra.Core.Abstracts.ApiAbstracts;
@@ -26,6 +28,8 @@ namespace YallaKhadra.API.Extentions {
             //API Layer Dependency Registrations
             services.AddTransient<ICurrentUserService, CurrentUserService>();
             services.AddTransient<IClientContextService, ClientContextService>();
+            services.AddScoped<IAuthorizationHandler, SameUserOrAdminHandler>();
+
 
             //Other Layers Dependency Registrations
             services.InfrastrctureLayerDepenedencyRegistration(configuration);
@@ -125,9 +129,14 @@ namespace YallaKhadra.API.Extentions {
         }
         private static IServiceCollection AutorizationServiceConfiguations(this IServiceCollection services, IConfiguration configuration) {
             services.AddAuthorization(options => {
-                options.AddPolicy("ResetPasswordPolicy", policy => {
+                options.AddPolicy(AuthorizationPolicies.ResetPassword, policy => {
                     policy.RequireAuthenticatedUser();
                     policy.RequireClaim("purpose", "reset-password");
+                });
+
+                options.AddPolicy(AuthorizationPolicies.SameUserOrAdmin, policy => {
+                    policy.RequireAuthenticatedUser();
+                    policy.AddRequirements(new SameUserOrAdminRequirement());
                 });
 
             });

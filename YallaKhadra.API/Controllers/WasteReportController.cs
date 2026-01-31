@@ -11,9 +11,7 @@ namespace YallaKhadra.API.Controllers {
     /// <summary>
     /// Waste Report management controller for handling waste report operations
     /// </summary>
-    [ApiController]
     [Authorize]
-    [Produces("application/json")]
     public class WasteReportController : BaseController {
 
         /// <summary>

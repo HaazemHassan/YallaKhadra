@@ -71,7 +71,7 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
 
                     user.ProfileImageId = uploadedImage.Id;
                     await _userManager.UpdateAsync(user);
-                    
+
                     // Reload user with ProfileImage
                     user = await _userManager.Users
                         .Include(u => u.ProfileImage)
@@ -150,19 +150,56 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
         }
 
         public async Task<Response> Handle(UpdateUserCommand request, CancellationToken cancellationToken) {
-            ApplicationUser? userFromDb = await _userManager.FindByIdAsync(request.Id.ToString());
-            if (userFromDb is null)
-                return NotFound("User not found");
+
+            UserProfileImage? newProfileImage = null;
+
+            await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
+            try {
+
+                var userFromDb = await _userManager.Users
+                    .Include(u => u.ProfileImage)
+                    .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);
+
+                if (userFromDb is null)
+                    return NotFound("User not found");
 
 
-            var userMapped = _mapper.Map(request, userFromDb);
-            var updateResult = await _userManager.UpdateAsync(userMapped);
-            if (updateResult.Succeeded)
+                var oldProfileImage = userFromDb.ProfileImage;
+
+                if (request.ProfileImage is not null) {
+                    newProfileImage = await _imageService.UploadAsync(
+                        request.ProfileImage,
+                        _currentUserService.UserId!.Value,
+                        userFromDb.Id,
+                        cancellationToken);
+
+                    userFromDb.ProfileImageId = newProfileImage.Id;
+                }
+
+                var userMapped = _mapper.Map(request, userFromDb);
+                var updateResult = await _userManager.UpdateAsync(userMapped);
+                if (!updateResult.Succeeded) {
+                    if (newProfileImage is not null)
+                        await _imageService.DeleteAsync(newProfileImage);
+
+                    await _unitOfWork.RollbackAsync();
+                    return BadRequest("Update failed.");
+                }
+
+                if (newProfileImage != null && oldProfileImage != null)
+                    await _imageService.DeleteAsync(oldProfileImage);
+
+
+                await _unitOfWork.CommitAsync();
                 return Updated("User updated successfully");
+            }
+            catch (Exception ex) {
+                if (newProfileImage != null)
+                    await _imageService.DeleteAsync(newProfileImage);
 
-            return BadRequest("Update failed.");
-
-
+                await _unitOfWork.RollbackAsync();
+                return BadRequest($"An error occurred: {ex.Message}");
+            }
         }
 
 

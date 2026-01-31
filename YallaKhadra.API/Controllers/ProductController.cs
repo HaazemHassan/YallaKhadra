@@ -12,8 +12,6 @@ namespace YallaKhadra.API.Controllers {
     /// <summary>
     /// Product management controller for e-commerce operations
     /// </summary>
-    [ApiController]
-    [Produces("application/json")]
     public class ProductController : BaseController {
 
         /// <summary>
@@ -95,11 +93,13 @@ namespace YallaKhadra.API.Controllers {
         /// <response code="200">Product deleted successfully</response>
         /// <response code="404">Product not found</response>
         /// <response code="400">Delete operation failed</response>
+        /// <response code="401">User is not authenticated</response>
         [HttpDelete("delete/{id:int}")]
         [Authorize(Roles = $"{nameof(UserRole.SuperAdmin)},{nameof(UserRole.Admin)}")]
         [ProducesResponseType(typeof(Response), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> DeleteProduct(int id) {
             var command = new DeleteProductCommand { Id = id };
             var result = await Mediator.Send(command);

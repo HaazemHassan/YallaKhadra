@@ -44,7 +44,7 @@ namespace YallaKhadra.Core.Features.Users.Queries.Handlers {
                 var user = await _userManager.Users
                     .Include(u => u.ProfileImage)
                     .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);
-                    
+
                 if (user is null)
                     return NotFound<GetUserByIdResponse>();
 

@@ -13,8 +13,6 @@ namespace YallaKhadra.Controllers {
     /// <summary>
     /// Authentication controller for handling user login and token management
     /// </summary>
-    [ApiController]
-    [Produces("application/json")]
     public class AuthenticationController : BaseController {
         private readonly JwtSettings _jwtSettings;
         private readonly IClientContextService _clientContextService;
@@ -37,7 +35,7 @@ namespace YallaKhadra.Controllers {
         /// <response code="403">User is already authenticated (anonymous only endpoint)</response>
         /// <response code="429">Too many login attempts, please try again later</response>
         /// <remarks>
-        /// The refresh token is automatically stored in an HTTP-only cookie named 'refreshToken' for security.
+        /// The refresh token is automatically stored in an HTTP-only cookie named 'refreshToken' for web users only.
         /// Rate limit: 5 attempts per minute per IP address.
         /// </remarks>
         [HttpPost("login")]
@@ -64,7 +62,7 @@ namespace YallaKhadra.Controllers {
         /// <response code="401">Invalid or expired refresh token</response>
         /// <response code="400">Invalid access token format</response>
         /// <remarks>
-        /// The refresh token is automatically read from the 'refreshToken' HTTP-only cookie.
+        /// The refresh token is automatically read from the 'refreshToken' HTTP-only cookie for web users only.
         /// A new refresh token is generated and stored in the cookie, while the old one is revoked.
         /// The access token in the request body can be expired, but must be valid in format.
         /// </remarks>
@@ -88,9 +86,19 @@ namespace YallaKhadra.Controllers {
 
 
 
-
+        /// <summary>
+        /// Logout the current user and revoke refresh token
+        /// </summary>
+        /// <param name="command">Refresh token payload (for non-web clients)</param>
+        /// <returns>Confirmation of logout</returns>
+        /// <response code="200">Logout successful</response>
+        /// <response code="400">Logout failed</response>
+        /// <response code="401">Refresh token is missing or invalid</response>
         [HttpPost("logout")]
         [Authorize]
+        [ProducesResponseType(typeof(Response), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Logout([FromBody] LogoutCommand command) {
             if (_clientContextService.IsWebClient())
                 command.RefreshToken = Request.Cookies["refreshToken"];
@@ -106,8 +114,19 @@ namespace YallaKhadra.Controllers {
         }
 
 
-
+        /// <summary>
+        /// Change the current user's password
+        /// </summary>
+        /// <param name="command">Current and new password details</param>
+        /// <returns>Confirmation of password change</returns>
+        /// <response code="200">Password changed successfully</response>
+        /// <response code="400">Invalid input data or password change failed</response>
+        /// <response code="401">User is not authenticated</response>
         [HttpPatch("change-password")]
+        [Authorize]
+        [ProducesResponseType(typeof(Response), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> UpdatePassword([FromBody] ChangePasswordCommand command) {
             var result = await Mediator.Send(command);
             return NewResult(result);
