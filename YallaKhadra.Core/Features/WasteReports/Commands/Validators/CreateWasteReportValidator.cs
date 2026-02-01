@@ -17,11 +17,17 @@ namespace YallaKhadra.Core.Features.WasteReports.Commands.Validators {
                 .WithMessage("Waste type is required.");
 
             RuleFor(x => x.Address)
+                .NotEmpty()
+                .WithMessage("Address is required.")
                 .MaximumLength(500)
                 .WithMessage("Address must not exceed 500 characters.");
 
             RuleFor(x => x.Images)
-                .Must(images => images == null || images.Count <= 10)
+                .NotNull()
+                .WithMessage("At least one image is required.")
+                .NotEmpty()
+                .WithMessage("At least one image is required.")
+                .Must(images => images.Count <= 10)
                 .WithMessage("Maximum 10 images allowed per report.");
 
             RuleForEach(x => x.Images)

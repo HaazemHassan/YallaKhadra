@@ -18,7 +18,7 @@ namespace YallaKhadra.Core.Features.WasteReports.Queries.Handlers
                                             IRequestHandler<GetWasteReportsPaginatedQuery, PaginatedResult<WasteReportResponse>>,
                                             IRequestHandler<GetReportsNearLocationQuery, Response<List<WasteReportResponse>>>,
                                             IRequestHandler<GetPendingReportsQuery, PaginatedResult<WasteReportResponse>>,
-                                            IRequestHandler<GetMyReportsQuery, PaginatedResult<WasteReportResponse>>
+                                            IRequestHandler<GetMyReportsQuery, PaginatedResult<WasteReportBriefDto>>
     {
 
         private readonly IWasteReportRepository _wasteReportRepository;
@@ -172,14 +172,14 @@ namespace YallaKhadra.Core.Features.WasteReports.Queries.Handlers
             }
         }
 
-        public async Task<PaginatedResult<WasteReportResponse>> Handle(GetMyReportsQuery request, CancellationToken cancellationToken)
+        public async Task<PaginatedResult<WasteReportBriefDto>> Handle(GetMyReportsQuery request, CancellationToken cancellationToken)
         {
             try
             {
                 // Get current user ID
                 var userId = _currentUserService.UserId;
                 if (!userId.HasValue)
-                    return PaginatedResult<WasteReportResponse>.Failure("User is not authenticated.");
+                    return PaginatedResult<WasteReportBriefDto>.Failure("User is not authenticated.");
 
                 // Build query with user filter
                 var query = _wasteReportRepository
@@ -191,55 +191,20 @@ namespace YallaKhadra.Core.Features.WasteReports.Queries.Handlers
                     query = query.Where(r => r.Status == request.Status.Value);
                 }
 
-                // Get user's reports with only first image
-                var myReportsQuery = query
-                    .Select(r => new
-                    {
-                        Report = r,
-                        FirstImage = r.Images.OrderBy(i => i.Id).FirstOrDefault()
-                    })
-                    .OrderByDescending(x => x.Report.CreatedAt);
+                query = query
+                    .Include(r => r.Images)
+                    .Include(r => r.User)
+                    .OrderByDescending(r => r.CreatedAt);
 
-                // Get total count
-                var totalCount = await myReportsQuery.CountAsync(cancellationToken);
+                var paginatedResult = await query
+                    .ProjectTo<WasteReportBriefDto>(_mapper.ConfigurationProvider)
+                    .ToPaginatedResultAsync(request.PageNumber, request.PageSize);
 
-                // Apply pagination
-                var paginatedReports = await myReportsQuery
-                    .Skip((request.PageNumber - 1) * request.PageSize)
-                    .Take(request.PageSize)
-                    .ToListAsync(cancellationToken);
-
-                // Map to response DTOs
-                var response = paginatedReports.Select(x =>
-                {
-                    var dto = _mapper.Map<WasteReportResponse>(x.Report);
-                    // Override images to only include first image
-                    if (x.FirstImage != null)
-                    {
-                        dto.Images = new List<ReportImageDto> {
-                            new ReportImageDto {
-                                Id = x.FirstImage.Id,
-                                Url = x.FirstImage.Url,
-                                UploadedAt = x.FirstImage.UploadedAt
-                            }
-                        };
-                    }
-                    else
-                    {
-                        dto.Images = new List<ReportImageDto>();
-                    }
-                    return dto;
-                }).ToList();
-
-                return PaginatedResult<WasteReportResponse>.Success(
-                    response,
-                    totalCount,
-                    request.PageNumber,
-                    request.PageSize);
+                return paginatedResult;
             }
             catch (Exception ex)
             {
-                return PaginatedResult<WasteReportResponse>.Failure($"An error occurred: {ex.Message}");
+                return PaginatedResult<WasteReportBriefDto>.Failure($"An error occurred: {ex.Message}");
             }
         }
     }

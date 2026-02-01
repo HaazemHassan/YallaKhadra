@@ -29,6 +29,19 @@ namespace YallaKhadra.Core.Mapping.WasteReports {
                 .ForMember(dest => dest.Images,
                     opt => opt.MapFrom(src => src.Images));
 
+
+            CreateMap<WasteReport, WasteReportBriefDto>()
+                .ForMember(dest => dest.UserName,
+                    opt => opt.MapFrom(src => src.User != null
+                        ? $"{src.User.FirstName} {src.User.LastName}"
+                        : null))
+                .ForMember(dest => dest.StatusName,
+                    opt => opt.MapFrom(src => src.Status.ToString()))
+                .ForMember(dest => dest.WasteTypeName,
+                    opt => opt.MapFrom(src => src.WasteType.ToString()))
+                .ForMember(dest => dest.FirstImage,
+                    opt => opt.MapFrom(src => src.Images.OrderBy(i => i.Id).FirstOrDefault()));
+
             CreateMap<ReportImage, ReportImageDto>();
         }
     }
