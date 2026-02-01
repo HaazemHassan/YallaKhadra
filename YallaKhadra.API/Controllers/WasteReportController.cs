@@ -78,7 +78,7 @@ namespace YallaKhadra.API.Controllers {
         /// <response code="400">Invalid pagination parameters</response>
         /// <response code="401">User is not authenticated</response>
         [HttpGet("my")]
-        [ProducesResponseType(typeof(PaginatedResult<WasteReportResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PaginatedResult<WasteReportBriefDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetMyReports([FromQuery] GetMyReportsQuery query) {
