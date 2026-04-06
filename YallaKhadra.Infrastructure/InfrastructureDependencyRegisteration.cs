@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Hangfire;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using YallaKhadra.Core.Abstracts.InfrastructureAbstracts;
 using YallaKhadra.Core.Entities.IdentityEntities;
+using YallaKhadra.Infrastructure.BackgroundJobs;
+using YallaKhadra.Infrastructure.BackgroundJobs.Jobs;
 using YallaKhadra.Infrastructure.Data;
 using YallaKhadra.Infrastructure.Repositories;
 
@@ -16,6 +19,8 @@ public static class InfrastructureDependencyRegisteration {
         DbContextServiceConfiguations(services, configuration);
         RepositoryServiceConfiguations(services);
         IdentityServiceConfiguations(services);
+        HangfireServiceConfiguations(services, configuration);
+        BackgroundJobsServiceConfiguations(services);
         return services;
 
     }
@@ -63,6 +68,7 @@ public static class InfrastructureDependencyRegisteration {
         services.AddTransient(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddTransient<IUnitOfWork, UnitOfWork>();
         services.AddTransient<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddTransient<IVerificationCodeRepository, VerificationCodeRepository>();
         services.AddTransient<IWasteReportRepository, WasteReportRepository>();
         services.AddTransient<IPointsTransactionRepository, PointsTransactionRepository>();
         services.AddTransient<ICleanupTaskRepository, CleanupTaskRepository>();
@@ -76,6 +82,24 @@ public static class InfrastructureDependencyRegisteration {
 
 
 
+        return services;
+    }
+
+    private static IServiceCollection HangfireServiceConfiguations(IServiceCollection services, IConfiguration configuration) {
+        services.Configure<HangfireOptions>(configuration.GetSection(HangfireOptions.SectionName));
+
+        services.AddHangfire(config => config
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UseSqlServerStorage(configuration.GetConnectionString("DefaultConnection")));
+
+        services.AddHangfireServer();
+        return services;
+    }
+
+    private static IServiceCollection BackgroundJobsServiceConfiguations(IServiceCollection services) {
+        services.AddTransient<SendEmailJob>();
         return services;
     }
 }

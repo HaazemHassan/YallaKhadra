@@ -1,3 +1,4 @@
+using Hangfire;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -54,6 +55,9 @@ namespace YallaKhadra.API {
                 app.UseSwagger();
 
                 app.UseSwaggerUI();
+
+                var dashboardPath = app.Configuration["HangfireSettings:DashboardPath"] ?? "/jobs";
+                app.UseHangfireDashboard(dashboardPath);
             }
 
             app.UseErrorHandling();

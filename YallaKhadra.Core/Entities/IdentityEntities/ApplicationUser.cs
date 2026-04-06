@@ -6,6 +6,7 @@ namespace YallaKhadra.Core.Entities.IdentityEntities {
         public ApplicationUser() {
             RefreshTokens = new HashSet<RefreshToken>();
             PointsTransactions = new HashSet<PointsTransaction>();
+            VerificationCodes = new HashSet<VerificationCode>();
         }
 
         public string FirstName { get; set; }
@@ -18,6 +19,7 @@ namespace YallaKhadra.Core.Entities.IdentityEntities {
         public virtual UserProfileImage? ProfileImage { get; set; }
         public virtual ICollection<RefreshToken> RefreshTokens { get; set; }
         public virtual ICollection<PointsTransaction> PointsTransactions { get; set; }
+        public virtual ICollection<VerificationCode> VerificationCodes { get; set; }
 
     }
 }
