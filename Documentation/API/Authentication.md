@@ -7,7 +7,7 @@
 ---
 
 ## Overview
-This controller handles user authentication operations including login, token refresh, logout, and password management.
+This controller handles user authentication operations including login, token refresh, logout, password management, password reset, and email confirmation.
 
 ---
 
@@ -272,21 +272,6 @@ Logout the current user and revoke the refresh token. For web clients, the refre
 |----------|------|----------|------------------|
 | `RefreshToken` | string | ❌ | - **Optional for web clients** (read from HTTP-only cookie)<br>- **Required for non-web clients**<br>- Valid refresh token to revoke |
 
-### Request Example
-
-**For Web Clients:**
-```json
-{}
-```
-*Note: Refresh token is automatically read from the `refreshToken` cookie*
-
-**For Non-Web Clients:**
-```json
-{
-  "refreshToken": "a1b2c3d4e5f6g7h8i9j0"
-}
-```
-
 ### Response Codes
 
 #### ✅ 200 OK - Logout Successful
@@ -362,16 +347,7 @@ Change the password for the currently authenticated user.
 |----------|------|----------|------------------|
 | `CurrentPassword` | string | ✅ | - **Required** (cannot be empty or null) |
 | `NewPassword` | string | ✅ | - **Required** (cannot be empty or null)<br>- **Min Length**: 3 characters |
-| `ConfirmNewPassword` | string | ✅ | - **Required**<br>- **Must Match**: NewPassword<br>- **Error Message**: "Password does not match" |
-
-### Request Example
-```json
-{
-  "currentPassword": "OldPass123",
-  "newPassword": "NewSecurePass456",
-  "confirmNewPassword": "NewSecurePass456"
-}
-```
+| `ConfirmNewPassword` | string | ✅ | - **Required**<br>- Must match `NewPassword` |
 
 ### Response Codes
 
@@ -395,44 +371,299 @@ Change the password for the currently authenticated user.
   "succeeded": false,
   "message": "Validation failed",
   "errors": [
-    "CurrentPassword can't be empty",
-    "NewPassword must be at least of length 3",
     "Password does not match"
   ],
   "data": null
 }
 ```
 
-**Specific Validation Error Examples:**
+---
+
+## 5. Request Password Reset Code
+
+### Endpoint
+```http
+POST /api/authentication/password-reset/request
+```
+
+### Description
+Creates a password reset verification code and sends it to the user email.
+
+### Authentication
+- **Anonymous Only**
+
+### Request Body (application/json)
+
+| Property | Type | Required | Validation Rules |
+|----------|------|----------|------------------|
+| `Email` | string | ✅ | - **Required** (cannot be empty or null) |
+
+### Request Example
 ```json
-// Passwords don't match
 {
-  "errors": ["Password does not match"]
+  "email": "ahmed@example.com"
 }
+```
 
-// New password too short
+### Response Codes
+
+#### ✅ 200 OK - Request Processed
+```json
 {
-  "errors": ["NewPassword must be at least of length 3"]
+  "statusCode": 200,
+  "meta": null,
+  "succeeded": true,
+  "message": "Success",
+  "errors": null,
+  "data": null
 }
+```
 
-// Current password is wrong
+> The endpoint returns a generic success response to help prevent user email enumeration.
+
+#### ❌ 400 Bad Request - Invalid Data
+```json
 {
   "statusCode": 400,
+  "meta": null,
   "succeeded": false,
-  "message": "Current password is incorrect",
+  "message": "Validation failed",
+  "errors": [
+    "Email can't be empty"
+  ],
+  "data": null
+}
+```
+
+---
+
+## 6. Verify Password Reset Code
+
+### Endpoint
+```http
+POST /api/authentication/password-reset/verify-code
+```
+
+### Description
+Validates password reset verification code for the given email.
+
+### Authentication
+- No requirements
+
+### Request Body (application/json)
+
+| Property | Type | Required | Validation Rules |
+|----------|------|----------|------------------|
+| `Email` | string | ✅ | - **Required** |
+| `Code` | string | ✅ | - **Required** |
+
+### Request Example
+```json
+{
+  "email": "ahmed@example.com",
+  "code": "123456"
+}
+```
+
+### Response Codes
+
+#### ✅ 200 OK - Validation Completed
+```json
+{
+  "statusCode": 200,
+  "meta": null,
+  "succeeded": true,
+  "message": "Success",
+  "errors": null,
+  "data": {
+    "isValid": true
+  }
+}
+```
+
+#### ❌ 400 Bad Request - Invalid Data
+```json
+{
+  "statusCode": 400,
+  "meta": null,
+  "succeeded": false,
+  "message": "Validation failed",
+  "errors": [
+    "Code can't be empty"
+  ],
+  "data": null
+}
+```
+
+---
+
+## 7. Confirm Password Reset
+
+### Endpoint
+```http
+POST /api/authentication/password-reset/confirm
+```
+
+### Description
+Resets user password using email, verification code, and new password.
+
+### Authentication
+- **Anonymous Only**
+
+### Request Body (application/json)
+
+| Property | Type | Required | Validation Rules |
+|----------|------|----------|------------------|
+| `Email` | string | ✅ | - **Required** |
+| `Code` | string | ✅ | - **Required** |
+| `NewPassword` | string | ✅ | - **Required**<br>- **Min Length**: 3 characters |
+| `ConfirmNewPassword` | string | ✅ | - **Required**<br>- Must match `NewPassword` |
+
+### Request Example
+```json
+{
+  "email": "ahmed@example.com",
+  "code": "123456",
+  "newPassword": "NewSecurePass456",
+  "confirmNewPassword": "NewSecurePass456"
+}
+```
+
+### Response Codes
+
+#### ✅ 200 OK - Password Reset Successful
+```json
+{
+  "statusCode": 200,
+  "meta": null,
+  "succeeded": true,
+  "message": "Password reset successfully",
   "errors": null,
   "data": null
 }
 ```
 
-#### ❌ 401 Unauthorized - Not Authenticated
+#### ❌ 400 Bad Request - Invalid Data or Code
 ```json
 {
-  "statusCode": 401,
+  "statusCode": 400,
   "meta": null,
   "succeeded": false,
-  "message": "Unauthorized",
+  "message": "Invalid code.",
   "errors": null,
   "data": null
 }
 ```
+
+---
+
+## 8. Request Email Confirmation Code
+
+### Endpoint
+```http
+POST /api/authentication/email-confirmation/request
+```
+
+### Description
+Generates and sends a new email confirmation code.
+
+### Authentication
+- No requirements
+
+### Request Body (application/json)
+
+| Property | Type | Required | Validation Rules |
+|----------|------|----------|------------------|
+| `Email` | string | ✅ | - **Required** |
+
+### Request Example
+```json
+{
+  "email": "ahmed@example.com"
+}
+```
+
+### Response Codes
+
+#### ✅ 200 OK - Request Processed
+```json
+{
+  "statusCode": 200,
+  "meta": null,
+  "succeeded": true,
+  "message": "Success",
+  "errors": null,
+  "data": null
+}
+```
+
+> This endpoint can return success even if the user does not exist to avoid email enumeration.
+
+#### ❌ 400 Bad Request - Invalid Data
+```json
+{
+  "statusCode": 400,
+  "meta": null,
+  "succeeded": false,
+  "message": "Validation failed",
+  "errors": [
+    "Email can't be empty"
+  ],
+  "data": null
+}
+```
+
+---
+
+## 9. Confirm Email
+
+### Endpoint
+```http
+POST /api/authentication/email-confirmation/confirm
+```
+
+### Description
+Confirms user email by validating confirmation code.
+
+### Authentication
+- No requirements
+
+### Request Body (application/json)
+
+| Property | Type | Required | Validation Rules |
+|----------|------|----------|------------------|
+| `Email` | string | ✅ | - **Required** |
+| `Code` | string | ✅ | - **Required** |
+
+### Request Example
+```json
+{
+  "email": "ahmed@example.com",
+  "code": "654321"
+}
+```
+
+### Response Codes
+
+#### ✅ 200 OK - Email Confirmed
+```json
+{
+  "statusCode": 200,
+  "meta": null,
+  "succeeded": true,
+  "message": "Email confirmed successfully.",
+  "errors": null,
+  "data": null
+}
+```
+
+#### ❌ 400 Bad Request - Invalid or Expired Code
+```json
+{
+  "statusCode": 400,
+  "meta": null,
+  "succeeded": false,
+  "message": "Invalid code.",
+  "errors": null,
+  "data": null
+}

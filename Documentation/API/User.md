@@ -25,7 +25,7 @@ public enum UserRole {
 
 ### Endpoint
 ```http
-POST /register
+POST /api/user/register
 ```
 
 ### Description
@@ -55,30 +55,9 @@ Register a new user account in the system.
   "statusCode": 201,
   "meta": null,
   "succeeded": true,
-  "message": "User registered successfully",
+  "message": "Created Successfully",
   "errors": null,
-  "data": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refreshToken": {
-      "token": "a1b2c3d4e5f6g7h8i9j0",
-      "userId": 15,
-      "expirationDate": "2026-02-28T10:30:00Z",
-      "createdAt": "2026-01-30T10:30:00Z"
-    },
-    "user": {
-      "id": 15,
-      "email": "ahmed.ali@example.com",
-      "firstName": "Ahmed",
-      "lastName": "Ali",
-      "pointsBalance": 0,
-      "profileImage": {
-        "id": 42,
-        "url": "https://storage.example.com/profiles/15/profile.jpg"
-      },
-      "address": "Cairo, Egypt",
-      "phoneNumber": "+201234567890"
-    }
-  }
+  "data": null
 }
 ```
 

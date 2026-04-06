@@ -7,17 +7,21 @@ using YallaKhadra.Core.Abstracts.ApiAbstracts;
 using YallaKhadra.Core.Bases.Authentication;
 using YallaKhadra.Core.Bases.Responses;
 using YallaKhadra.Core.Features.Authentication.Commands.RequestsModels;
+using YallaKhadra.Core.Features.Authentication.Queries.RequestsModels;
 
-namespace YallaKhadra.Controllers {
+namespace YallaKhadra.API.Controllers
+{
 
     /// <summary>
     /// Authentication controller for handling user login and token management
     /// </summary>
-    public class AuthenticationController : BaseController {
+    public class AuthenticationController : BaseController
+    {
         private readonly JwtSettings _jwtSettings;
         private readonly IClientContextService _clientContextService;
 
-        public AuthenticationController(JwtSettings jwtSettings, IClientContextService clientContextService) {
+        public AuthenticationController(JwtSettings jwtSettings, IClientContextService clientContextService)
+        {
             _jwtSettings = jwtSettings;
             _clientContextService = clientContextService;
         }
@@ -45,7 +49,8 @@ namespace YallaKhadra.Controllers {
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-        public async Task<IActionResult> Login([FromBody] SignInCommand command) {
+        public async Task<IActionResult> Login([FromBody] SignInCommand command)
+        {
             var result = await Mediator.Send(command);
             HandleRefreshToken(result);
             return NewResult(result);
@@ -70,7 +75,8 @@ namespace YallaKhadra.Controllers {
         [ProducesResponseType(typeof(Response<AuthResult>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command) {
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command)
+        {
             if (_clientContextService.IsWebClient())
                 command.RefreshToken = Request.Cookies["refreshToken"];
 
@@ -99,7 +105,8 @@ namespace YallaKhadra.Controllers {
         [ProducesResponseType(typeof(Response), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> Logout([FromBody] LogoutCommand command) {
+        public async Task<IActionResult> Logout([FromBody] LogoutCommand command)
+        {
             if (_clientContextService.IsWebClient())
                 command.RefreshToken = Request.Cookies["refreshToken"];
 
@@ -127,41 +134,121 @@ namespace YallaKhadra.Controllers {
         [ProducesResponseType(typeof(Response), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> UpdatePassword([FromBody] ChangePasswordCommand command) {
+        public async Task<IActionResult> UpdatePassword([FromBody] ChangePasswordCommand command)
+        {
+            var result = await Mediator.Send(command);
+            return NewResult(result);
+        }
+
+        /// <summary>
+        /// Request a password reset code via email
+        /// </summary>
+        /// <param name="command">User email used to send a reset verification code</param>
+        /// <returns>Generic success response to prevent email enumeration</returns>
+        /// <response code="200">Request processed successfully</response>
+        /// <response code="400">Invalid request payload</response>
+        /// <remarks>
+        /// If the email exists, a reset code is generated and sent to the user.
+        /// The API returns a generic response for non-existing emails as well.
+        /// </remarks>
+        [HttpPost("password-reset/request")]
+        [AnonymousOnly]
+        [ProducesResponseType(typeof(Response), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> SendResetPasswordEmail([FromBody] SendResetPasswordEmailCommand command)
+        {
+            var result = await Mediator.Send(command);
+            return NewResult(result);
+        }
+
+
+        /// <summary>
+        /// Validate a password reset verification code
+        /// </summary>
+        /// <param name="query">Email and verification code to validate</param>
+        /// <returns>Validation result indicating whether the code is valid</returns>
+        /// <response code="200">Validation completed successfully</response>
+        /// <response code="400">Invalid request payload</response>
+        [HttpPost("password-reset/verify-code")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(Response), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ValidateResetPasswordCode([FromBody] ValidateResetPasswordCodeQuery query)
+        {
+            var result = await Mediator.Send(query);
+            return NewResult(result);
+        }
+
+
+        /// <summary>
+        /// Reset user password using a valid verification code
+        /// </summary>
+        /// <param name="command">Email, verification code, and the new password</param>
+        /// <returns>Confirmation response for password reset operation</returns>
+        /// <response code="200">Password reset completed successfully</response>
+        /// <response code="400">Invalid code, invalid password, or request payload</response>
+        [HttpPost("password-reset/confirm")]
+        [AnonymousOnly]
+        [ProducesResponseType(typeof(Response), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand command)
+        {
             var result = await Mediator.Send(command);
             return NewResult(result);
         }
 
 
 
-        [HttpPost("resend-confirmation-email")]
+        /// <summary>
+        /// Resend email confirmation code
+        /// </summary>
+        /// <param name="command">User email that should receive a new confirmation code</param>
+        /// <returns>Generic success response to prevent email enumeration</returns>
+        /// <response code="200">Request processed successfully</response>
+        /// <response code="400">Invalid request payload</response>
+        /// <remarks>
+        /// If the account exists and is not confirmed, a new confirmation code is generated and sent.
+        /// The API may still return success for unknown emails.
+        /// </remarks>
+        [HttpPost("email-confirmation/request")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(Response), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> ResendConfirmationEmail([FromBody] ResendConfirmationEmailCommand command) {
+        public async Task<IActionResult> ResendConfirmationEmail([FromBody] ResendConfirmationEmailCommand command)
+        {
             var result = await Mediator.Send(command);
             return NewResult(result);
         }
 
 
-        [HttpPost("confirm-email")]
+        /// <summary>
+        /// Confirm user email using verification code
+        /// </summary>
+        /// <param name="command">User email and confirmation code</param>
+        /// <returns>Confirmation result for email verification</returns>
+        /// <response code="200">Email confirmed successfully</response>
+        /// <response code="400">Invalid or expired code</response>
+        [HttpPost("email-confirmation/confirm")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(Response), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailCommand command) {
+        public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailCommand command)
+        {
             var result = await Mediator.Send(command);
             return NewResult(result);
         }
 
 
         //helpers
-        private void HandleRefreshToken(Response<AuthResult> result) {
+        private void HandleRefreshToken(Response<AuthResult> result)
+        {
             if (!result.Succeeded || result.Data?.RefreshToken is null)
                 return;
 
             var refreshToken = result.Data.RefreshToken.Token;
 
-            if (_clientContextService.IsWebClient()) {
+            if (_clientContextService.IsWebClient())
+            {
                 var cookieOptions = new CookieOptions {
                     HttpOnly = true,
                     Secure = true,

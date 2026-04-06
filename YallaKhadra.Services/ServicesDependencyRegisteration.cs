@@ -15,6 +15,8 @@ namespace YallaKhadra.Services {
             services.AddTransient<IApplicationUserService, ApplicationUserService>();
             services.AddTransient<IAuthenticationService, AuthenticationService>();
             services.AddTransient<IEmailVerificationService, EmailVerificationService>();
+            services.AddTransient<IPasswordService, PasswordService>();
+            services.AddSingleton<IOtpService, OtpService>();
             services.AddTransient<IEmailService, EmailService>();
             services.AddSingleton<IEmailBodyBuilderService, EmailBodyBuilderService>();
             services.AddTransient<IWasteReportService, WasteReportService>();
