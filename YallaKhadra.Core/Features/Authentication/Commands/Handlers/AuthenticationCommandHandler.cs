@@ -20,31 +20,39 @@ public class AuthenticationCommandHandler : ResponseHandler,
                                                          IRequestHandler<RefreshTokenCommand, Response<AuthResult>>,
                                                          IRequestHandler<LogoutCommand, Response<bool>>,
                                                          IRequestHandler<ChangePasswordCommand, Response>,
+                                                         IRequestHandler<SendResetPasswordEmailCommand, Response>,
+                                                         IRequestHandler<ResetPasswordCommand, Response>,
                                                          IRequestHandler<ResendConfirmationEmailCommand, Response>,
-                                                         IRequestHandler<ConfirmEmailCommand, Response> {
+                                                         IRequestHandler<ConfirmEmailCommand, Response>
+{
 
 
     private readonly IMapper _mapper;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IAuthenticationService _authenticationService;
     private readonly IEmailVerificationService _emailVerificationService;
+    private readonly IPasswordService _passwordService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
 
 
-    public AuthenticationCommandHandler(UserManager<ApplicationUser> userManager, IMapper mapper, IAuthenticationService authenticationService, IEmailVerificationService emailVerificationService, ICurrentUserService currentUserService, IUnitOfWork unitOfWork) {
+    public AuthenticationCommandHandler(UserManager<ApplicationUser> userManager, IMapper mapper, IAuthenticationService authenticationService, IEmailVerificationService emailVerificationService, IPasswordService passwordService, ICurrentUserService currentUserService, IUnitOfWork unitOfWork)
+    {
         _userManager = userManager;
         _mapper = mapper;
         _authenticationService = authenticationService;
         _emailVerificationService = emailVerificationService;
+        _passwordService = passwordService;
         _currentUserService = currentUserService;
         _unitOfWork = unitOfWork;
     }
 
 
 
-    public async Task<Response<AuthResult>> Handle(SignInCommand request, CancellationToken cancellationToken) {
-        try {
+    public async Task<Response<AuthResult>> Handle(SignInCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
             var userFromDb = await _userManager.Users
                 .Include(u => u.ProfileImage)
                 .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
@@ -66,16 +74,20 @@ public class AuthenticationCommandHandler : ResponseHandler,
             authResult.Data.User = _mapper.Map<GetUserByIdResponse>(userFromDb);
             return Success(authResult.Data);
         }
-        catch (Exception ex) {
+        catch (Exception ex)
+        {
             return BadRequest<AuthResult>($"An error occurred: {ex.Message}");
         }
     }
 
-    public async Task<Response<AuthResult>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken) {
-        try {
+    public async Task<Response<AuthResult>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
             var authResult = await _authenticationService.ReAuthenticateAsync(request.RefreshToken!, request.AccessToken);
 
-            if (authResult.Status != ServiceOperationStatus.Succeeded || authResult.Data is null) {
+            if (authResult.Status != ServiceOperationStatus.Succeeded || authResult.Data is null)
+            {
                 return authResult.Status switch {
                     ServiceOperationStatus.Unauthorized => Unauthorized<AuthResult>(authResult.ErrorMessage ?? "Invalid token"),
                     _ => BadRequest<AuthResult>(authResult.ErrorMessage ?? "Something went wrong")
@@ -89,12 +101,14 @@ public class AuthenticationCommandHandler : ResponseHandler,
             authResult.Data.User = _mapper.Map<GetUserByIdResponse>(user);
             return Success(authResult.Data);
         }
-        catch (Exception ex) {
+        catch (Exception ex)
+        {
             return BadRequest<AuthResult>($"An error occurred: {ex.Message}");
         }
     }
 
-    public async Task<Response<bool>> Handle(LogoutCommand request, CancellationToken cancellationToken) {
+    public async Task<Response<bool>> Handle(LogoutCommand request, CancellationToken cancellationToken)
+    {
         ServiceOperationResult<bool> serviceResult = await _authenticationService.LogoutAsync(request.RefreshToken!);
 
         return serviceResult.Status switch {
@@ -105,7 +119,8 @@ public class AuthenticationCommandHandler : ResponseHandler,
         };
     }
 
-    public async Task<Response> Handle(ChangePasswordCommand request, CancellationToken cancellationToken) {
+    public async Task<Response> Handle(ChangePasswordCommand request, CancellationToken cancellationToken)
+    {
         var userId = _currentUserService.UserId;
         if (userId is null)
             return Unauthorized("User not found !");
@@ -126,16 +141,58 @@ public class AuthenticationCommandHandler : ResponseHandler,
         return BadRequest("Something went wrong while updating.");
     }
 
-    public async Task<Response> Handle(ResendConfirmationEmailCommand request, CancellationToken cancellationToken) {
+    public async Task<Response> Handle(SendResetPasswordEmailCommand request, CancellationToken cancellationToken)
+    {
         var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
 
-        if (user is null) {
+        if (user is null)
+        {
+            return Success();
+        }
+
+        var createCodeResult = await _passwordService.CreatePasswordResetCodeAsync(user.Id);
+
+        if (createCodeResult.Status != ServiceOperationStatus.Succeeded || string.IsNullOrWhiteSpace(createCodeResult.Data))
+        {
+            return BadRequest(createCodeResult.ErrorMessage);
+
+        }
+
+        await _passwordService.SendPasswordResetEmailAsync(user, createCodeResult.Data);
+
+
+        return Success(message: "Password reset email sent successfully.");
+    }
+
+    public async Task<Response> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
+    {
+        var resetResult = await _passwordService.ResetPasswordAsync(request.Email, request.Code, request.NewPassword);
+
+        if (resetResult.Status == ServiceOperationStatus.Succeeded)
+        {
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+
+        return resetResult.Status switch {
+            ServiceOperationStatus.Succeeded => Success(message: "Password reset successfully."),
+            ServiceOperationStatus.NotFound => BadRequest(resetResult.ErrorMessage ?? "Invalid code."),
+            _ => BadRequest(resetResult.ErrorMessage ?? "Failed to reset password.")
+        };
+    }
+
+    public async Task<Response> Handle(ResendConfirmationEmailCommand request, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
+
+        if (user is null)
+        {
             return Success();
         }
 
         var createCodeResult = await _emailVerificationService.CreateEmailConfirmationCodeAsync(user.Id);
 
-        if (createCodeResult.Status != ServiceOperationStatus.Succeeded || string.IsNullOrWhiteSpace(createCodeResult.Data)) {
+        if (createCodeResult.Status != ServiceOperationStatus.Succeeded || string.IsNullOrWhiteSpace(createCodeResult.Data))
+        {
             return createCodeResult.Status switch {
                 ServiceOperationStatus.NotFound => Success(),
                 _ => BadRequest(createCodeResult.ErrorMessage)
@@ -147,16 +204,19 @@ public class AuthenticationCommandHandler : ResponseHandler,
         return Success();
     }
 
-    public async Task<Response> Handle(ConfirmEmailCommand request, CancellationToken cancellationToken) {
+    public async Task<Response> Handle(ConfirmEmailCommand request, CancellationToken cancellationToken)
+    {
         var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
 
-        if (user is null) {
+        if (user is null)
+        {
             return Success();
         }
 
         var confirmResult = await _emailVerificationService.ConfirmEmailAsync(user.Id, request.Code);
 
-        if (confirmResult.Status == ServiceOperationStatus.Succeeded) {
+        if (confirmResult.Status == ServiceOperationStatus.Succeeded)
+        {
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 

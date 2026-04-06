@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using YallaKhadra.API.Auhtorization;
 using YallaKhadra.API.Bases;
 using YallaKhadra.API.Filters;
-using YallaKhadra.Core.Bases.Authentication;
 using YallaKhadra.Core.Bases.Responses;
 using YallaKhadra.Core.Enums;
 using YallaKhadra.Core.Features.Users.Commands.RequestModels;
@@ -25,15 +24,15 @@ namespace YallaKhadra.API.Controllers {
         /// <summary>
         /// Register a new user account
         /// </summary>
-        /// <param name="command">User registration details including username, email, password, and personal information</param>
-        /// <returns>JWT token with user information if registration is successful</returns>
-        /// <response code="201">User registered successfully and JWT token returned</response>
+        /// <param name="command">User registration details including first name, last name, email, password, optional phone/address, and optional profile image</param>
+        /// <returns>Creation response for a newly registered user</returns>
+        /// <response code="201">User registered successfully</response>
         /// <response code="400">Invalid input data or registration failed</response>
-        /// <response code="409">User with the same email, username, or phone number already exists</response>
+        /// <response code="409">User with the same email or phone number already exists</response>
         /// <response code="403">User is already authenticated (anonymous only endpoint)</response>
         [HttpPost("register")]
         [AnonymousOnly]
-        [ProducesResponseType(typeof(Response<AuthResult>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(Response), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
