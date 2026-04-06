@@ -133,6 +133,27 @@ namespace YallaKhadra.Controllers {
         }
 
 
+
+        [HttpPost("resend-confirmation-email")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(Response), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ResendConfirmationEmail([FromBody] ResendConfirmationEmailCommand command) {
+            var result = await Mediator.Send(command);
+            return NewResult(result);
+        }
+
+
+        [HttpPost("confirm-email")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(Response), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailCommand command) {
+            var result = await Mediator.Send(command);
+            return NewResult(result);
+        }
+
+
         //helpers
         private void HandleRefreshToken(Response<AuthResult> result) {
             if (!result.Succeeded || result.Data?.RefreshToken is null)

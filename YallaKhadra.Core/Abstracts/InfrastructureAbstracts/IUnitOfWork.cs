@@ -4,7 +4,7 @@ namespace YallaKhadra.Core.Abstracts.InfrastructureAbstracts;
 
 public interface IUnitOfWork : IAsyncDisposable {
 
-    Task<int> SaveChangesAsync();
+    Task<int> SaveChangesAsync(CancellationToken ct = default);
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken);
     Task CommitAsync();
     Task RollbackAsync();

@@ -80,11 +80,12 @@
         }
 
 
-        public Response<T> Unauthorized<T>(string? message = null) {
+        public Response<T> Unauthorized<T>(string? message = null, string? errorCode = default) {
             return new Response<T>() {
                 StatusCode = System.Net.HttpStatusCode.Unauthorized,
                 Succeeded = false,
-                Message = message ?? "Unauthorized Access"
+                Message = message ?? "Unauthorized Access",
+                ErrorCode = errorCode
             };
         }
 

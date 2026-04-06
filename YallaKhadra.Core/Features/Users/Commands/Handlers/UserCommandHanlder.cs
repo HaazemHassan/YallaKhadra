@@ -11,10 +11,9 @@ using YallaKhadra.Core.Entities.IdentityEntities;
 using YallaKhadra.Core.Enums;
 using YallaKhadra.Core.Features.Users.Commands.RequestModels;
 using YallaKhadra.Core.Features.Users.Commands.Responses;
-using YallaKhadra.Core.Features.Users.Queries.Responses;
 
 namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
-    public class UserCommandHanlder : ResponseHandler, IRequestHandler<RegisterCommand, Response<AuthResult>>,
+    public class UserCommandHanlder : ResponseHandler, IRequestHandler<RegisterCommand, Response>,
                                                        IRequestHandler<AddUserCommand, Response<AddUserResponse>>,
                                                        IRequestHandler<UpdateUserCommand, Response> {
 
@@ -24,20 +23,22 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ICurrentUserService _currentUserService;
         private readonly IAuthenticationService _authenticationService;
+        private readonly IEmailVerificationService _emailVerificationService;
         private readonly IImageService<UserProfileImage> _imageService;
 
-        public UserCommandHanlder(IUnitOfWork unitOfWork, IMapper mapper, IApplicationUserService applicationUserService, ICurrentUserService currentUserService, UserManager<ApplicationUser> userManager, IAuthenticationService authenticationService, IImageService<UserProfileImage> imageService) {
+        public UserCommandHanlder(IUnitOfWork unitOfWork, IMapper mapper, IApplicationUserService applicationUserService, ICurrentUserService currentUserService, UserManager<ApplicationUser> userManager, IAuthenticationService authenticationService, IEmailVerificationService emailVerificationService, IImageService<UserProfileImage> imageService) {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _applicationUserService = applicationUserService;
             _currentUserService = currentUserService;
             _userManager = userManager;
             _authenticationService = authenticationService;
+            _emailVerificationService = emailVerificationService;
             _imageService = imageService;
         }
 
 
-        public async Task<Response<AuthResult>> Handle(RegisterCommand request, CancellationToken cancellationToken) {
+        public async Task<Response> Handle(RegisterCommand request, CancellationToken cancellationToken) {
             await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
             UserProfileImage? uploadedImage = null;
             try {
@@ -61,7 +62,6 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
                     return BadRequest<AuthResult>("Failed to assign user to role");
                 }
 
-                // Upload profile image if provided
                 if (request.ProfileImage != null && request.ProfileImage.Length > 0) {
                     uploadedImage = await _imageService.UploadWithoutSaveAsync(
                         request.ProfileImage,
@@ -72,31 +72,38 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
                     user.ProfileImageId = uploadedImage.Id;
                     await _userManager.UpdateAsync(user);
 
-                    // Reload user with ProfileImage
                     user = await _userManager.Users
                         .Include(u => u.ProfileImage)
                         .FirstOrDefaultAsync(u => u.Id == user.Id, cancellationToken);
                 }
 
-                var authResult = await _authenticationService.AuthenticateAsync(user!);
-                if (authResult.Status != ServiceOperationStatus.Succeeded || authResult.Data is null) {
+                if (user is null) {
+                    await _unitOfWork.RollbackAsync();
+                    return BadRequest<AuthResult>("User not found.");
+                }
+
+                var createCodeResult = await _emailVerificationService.CreateEmailConfirmationCodeAsync(user.Id);
+                if (createCodeResult.Status != ServiceOperationStatus.Succeeded || string.IsNullOrWhiteSpace(createCodeResult.Data)) {
                     if (uploadedImage != null) {
                         await _imageService.DeleteAsync(uploadedImage);
                     }
+
                     await _unitOfWork.RollbackAsync();
-                    return BadRequest<AuthResult>(authResult.ErrorMessage);
+                    return BadRequest<AuthResult>(createCodeResult.ErrorMessage ?? "Failed to create email confirmation code.");
                 }
 
-                authResult.Data.User = _mapper.Map<GetUserByIdResponse>(user);
+                await _emailVerificationService.SendConfirmationEmailAsync(user, createCodeResult.Data);
+
+                await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitAsync();
-                return Created(authResult.Data);
+                return Created();
             }
             catch (Exception ex) {
                 if (uploadedImage != null) {
                     await _imageService.DeleteAsync(uploadedImage);
                 }
                 await _unitOfWork.RollbackAsync();
-                return BadRequest<AuthResult>($"An error occurred: {ex.Message}");
+                throw;
             }
         }
 
@@ -133,6 +140,14 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
                     await _unitOfWork.RollbackAsync();
                     return BadRequest<AddUserResponse>("Failed to assign user to role");
                 }
+
+                var createCodeResult = await _emailVerificationService.CreateEmailConfirmationCodeAsync(addedUser.Id);
+                if (createCodeResult.Status != ServiceOperationStatus.Succeeded || string.IsNullOrWhiteSpace(createCodeResult.Data)) {
+                    await _unitOfWork.RollbackAsync();
+                    return BadRequest<AddUserResponse>(createCodeResult.ErrorMessage ?? "Failed to create email confirmation code.");
+                }
+
+                await _emailVerificationService.SendConfirmationEmailAsync(addedUser, createCodeResult.Data);
 
                 // Reload user with ProfileImage
                 var userWithImage = await _userManager.Users

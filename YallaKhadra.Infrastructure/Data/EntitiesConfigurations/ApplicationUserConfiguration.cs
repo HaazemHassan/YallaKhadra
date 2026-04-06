@@ -35,6 +35,11 @@ namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations
                    .WithOne(pt => pt.User)
                    .HasForeignKey(pt => pt.UserId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(u => u.VerificationCodes)
+                   .WithOne(vc => vc.ApplicationUser)
+                   .HasForeignKey(vc => vc.ApplicationUserId)
+                   .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

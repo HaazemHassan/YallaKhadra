@@ -13,8 +13,8 @@ public class UnitOfWork : IUnitOfWork {
         _context = context;
     }
 
-    public async Task<int> SaveChangesAsync() {
-        return await _context.SaveChangesAsync();
+    public async Task<int> SaveChangesAsync(CancellationToken ct = default) {
+        return await _context.SaveChangesAsync(ct);
     }
 
     public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken) {

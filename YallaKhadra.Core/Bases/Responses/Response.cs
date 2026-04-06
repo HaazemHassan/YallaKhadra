@@ -20,8 +20,8 @@ namespace YallaKhadra.Core.Bases.Responses {
 
         public bool Succeeded { get; set; }
         public string Message { get; set; }
+        public string? ErrorCode { get; set; }
         public List<string>? Errors { get; set; }
-        //public string? ErrorCode { get; set; }       //usefull when working with frontend
 
     }
     public class Response<T> : Response {
