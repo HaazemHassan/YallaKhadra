@@ -13,7 +13,12 @@ using YallaKhadra.Core.Features.CleanupTasks.Queries.Responses;
 namespace YallaKhadra.Core.Features.CleanupTasks.Queries.Handlers {
     public class CleanupTaskQueryHandler : ResponseHandler,
                                             IRequestHandler<GetMyUncompletedTasksQuery, Response<List<CleanupTaskResponse>>>,
-                                            IRequestHandler<GetAllCleanupTasksQuery, PaginatedResult<CleanupTaskResponse>> {
+
+                                            IRequestHandler<GetAllCleanupTasksQuery, PaginatedResult<CleanupTaskResponse>>,
+
+                                            IRequestHandler<GetMyWorkOverviewQuery, Response<CleanupWorkOverviewResponse>>,
+
+                                            IRequestHandler<GetMyMainOverviewQuery, Response<CleanupMainOverviewResponse>> {
 
         private readonly ICleanupTaskRepository _cleanupTaskRepository;
         private readonly ICleanupTaskService _cleanupTaskService;
@@ -78,6 +83,63 @@ namespace YallaKhadra.Core.Features.CleanupTasks.Queries.Handlers {
             }
             catch (Exception ex) {
                 return PaginatedResult<CleanupTaskResponse>.Failure($"An error occurred: {ex.Message}");
+            }
+        }
+
+        public async Task<Response<CleanupWorkOverviewResponse>> Handle(GetMyWorkOverviewQuery request, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var userId = _currentUserService.UserId;
+                if (!userId.HasValue)
+                    return Unauthorized<CleanupWorkOverviewResponse>("User is not authenticated.");
+
+                if (!_currentUserService.IsInRole(UserRole.Worker))
+                    return Unauthorized<CleanupWorkOverviewResponse>("Only workers can view work overview.");
+
+                var completedTasks = await _cleanupTaskRepository
+                    .GetTableNoTracking(t => t.WorkerId == userId.Value && t.CompletedAt.HasValue)
+                    .ToListAsync(cancellationToken);
+
+                var response = new CleanupWorkOverviewResponse
+                {
+                    CompletedCleanupsCount = completedTasks.Count,
+                    TotalHours = completedTasks.Sum(t => (t.CompletedAt!.Value - t.AssignedAt).TotalHours),
+                    TotalWeightInKg = completedTasks.Sum(t => t.FinalWeightInKg ?? 0m)
+                };
+
+                return Success(response, message: "Work overview retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest<CleanupWorkOverviewResponse>($"An error occurred: {ex.Message}");
+            }
+        }
+
+        public async Task<Response<CleanupMainOverviewResponse>> Handle(GetMyMainOverviewQuery request, CancellationToken cancellationToken) {
+            try {
+                var userId = _currentUserService.UserId;
+                if (!userId.HasValue)
+                    return Unauthorized<CleanupMainOverviewResponse>("User is not authenticated.");
+
+                if (!_currentUserService.IsInRole(UserRole.Worker))
+                    return Unauthorized<CleanupMainOverviewResponse>("Only workers can view main overview.");
+
+                var completedTasks = await _cleanupTaskRepository
+                    .GetTableNoTracking(t => t.WorkerId == userId.Value && t.CompletedAt.HasValue)
+                    .ToListAsync(cancellationToken);
+
+                var response = new CleanupMainOverviewResponse {
+                    CompletedCleanupsCount = completedTasks.Count,
+                    AverageHours = completedTasks.Count == 0
+                        ? 0
+                        : completedTasks.Average(t => (t.CompletedAt!.Value - t.AssignedAt).TotalHours)
+                };
+
+                return Success(response, message: "Main overview retrieved successfully.");
+            }
+            catch (Exception ex) {
+                return BadRequest<CleanupMainOverviewResponse>($"An error occurred: {ex.Message}");
             }
         }
     }

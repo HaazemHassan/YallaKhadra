@@ -73,6 +73,38 @@ namespace YallaKhadra.API.Controllers {
         }
 
         /// <summary>
+        /// Get current worker's cleanup work overview
+        /// </summary>
+        /// <returns>Total completed cleanups, total hours spent, and total waste weight in kg</returns>
+        /// <response code="200">Returns the worker work overview</response>
+        /// <response code="401">User is not authenticated or not a worker</response>
+        [HttpGet("my-work-overview")]
+        [Authorize(Roles = nameof(UserRole.Worker))]
+        [ProducesResponseType(typeof(Response<CleanupWorkOverviewResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetMyWorkOverview() {
+            var query = new GetMyWorkOverviewQuery();
+            var result = await Mediator.Send(query);
+            return NewResult(result);
+        }
+
+        /// <summary>
+        /// Get current worker's main overview
+        /// </summary>
+        /// <returns>Average time between AssignedAt and CompletedAt and total completed cleanups</returns>
+        /// <response code="200">Returns the worker main overview</response>
+        /// <response code="401">User is not authenticated or not a worker</response>
+        [HttpGet("main-overview")]
+        [Authorize(Roles = nameof(UserRole.Worker))]
+        [ProducesResponseType(typeof(Response<CleanupMainOverviewResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetMyMainOverview() {
+            var query = new GetMyMainOverviewQuery();
+            var result = await Mediator.Send(query);
+            return NewResult(result);
+        }
+
+        /// <summary>
         /// Get current worker's uncompleted cleanup tasks
         /// </summary>
         /// <returns>List of uncompleted tasks assigned to the current worker, ordered by assigned date (newest first)</returns>

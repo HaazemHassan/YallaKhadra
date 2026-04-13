@@ -18,7 +18,8 @@ namespace YallaKhadra.Core.Features.WasteReports.Queries.Handlers
                                             IRequestHandler<GetWasteReportsPaginatedQuery, PaginatedResult<WasteReportResponse>>,
                                             IRequestHandler<GetReportsNearLocationQuery, Response<List<WasteReportResponse>>>,
                                             IRequestHandler<GetPendingReportsQuery, PaginatedResult<WasteReportResponse>>,
-                                            IRequestHandler<GetMyReportsQuery, PaginatedResult<WasteReportBriefDto>>
+                                            IRequestHandler<GetMyReportsQuery, PaginatedResult<WasteReportBriefDto>>,
+                                            IRequestHandler<GetMyWorkQuery, PaginatedResult<MyWorkResponse>>
     {
 
         private readonly IWasteReportRepository _wasteReportRepository;
@@ -205,6 +206,56 @@ namespace YallaKhadra.Core.Features.WasteReports.Queries.Handlers
             catch (Exception ex)
             {
                 return PaginatedResult<WasteReportBriefDto>.Failure($"An error occurred: {ex.Message}");
+            }
+        }
+
+        public async Task<PaginatedResult<MyWorkResponse>> Handle(GetMyWorkQuery request, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var userId = _currentUserService.UserId;
+                if (!userId.HasValue)
+                    return PaginatedResult<MyWorkResponse>.Failure("User is not authenticated.");
+
+                if (!_currentUserService.IsInRole(UserRole.Worker))
+                    return PaginatedResult<MyWorkResponse>.Failure("Only workers can view their work.");
+
+                var pageNumber = Math.Max(1, request.PageNumber);
+                var pageSize = Math.Max(1, request.PageSize);
+
+                var query = _cleanupTaskRepository
+                    .GetTableNoTracking(t => t.WorkerId == userId.Value && t.CompletedAt != null && t.Report.Status == ReportStatus.Done)
+                    .Include(t => t.Report)
+                        .ThenInclude(r => r.Images)
+                    .OrderByDescending(t => t.CompletedAt);
+
+                var totalCount = await query.CountAsync(cancellationToken);
+
+                if (totalCount == 0)
+                    return PaginatedResult<MyWorkResponse>.Success([], totalCount, pageNumber, pageSize);
+
+                var items = await query
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(t => new MyWorkResponse
+                    {
+                        ReportId = t.ReportId,
+                        FirstImageUrl = t.Report.Images
+                            .OrderBy(i => i.UploadedAt)
+                            .ThenBy(i => i.Id)
+                            .Select(i => i.Url)
+                            .FirstOrDefault(),
+                        Address = t.Report.Address,
+                        CompletedAt = t.CompletedAt!.Value,
+                        Duration = t.CompletedAt!.Value - t.AssignedAt
+                    })
+                    .ToListAsync(cancellationToken);
+
+                return PaginatedResult<MyWorkResponse>.Success(items, totalCount, pageNumber, pageSize);
+            }
+            catch (Exception ex)
+            {
+                return PaginatedResult<MyWorkResponse>.Failure($"An error occurred: {ex.Message}");
             }
         }
     }
