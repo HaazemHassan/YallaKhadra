@@ -87,6 +87,24 @@ namespace YallaKhadra.API.Controllers {
         }
 
         /// <summary>
+        /// Get current worker's completed cleanup work with pagination
+        /// </summary>
+        /// <param name="query">Pagination parameters (page number and page size)</param>
+        /// <returns>Paginated list of completed reports for the current worker</returns>
+        /// <response code="200">Returns paginated list of completed work</response>
+        /// <response code="400">Invalid pagination parameters</response>
+        /// <response code="401">User is not authenticated</response>
+        [HttpGet("my-work")]
+        [ProducesResponseType(typeof(PaginatedResult<MyWorkResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [Authorize(Roles = nameof(UserRole.Worker))]
+        public async Task<IActionResult> GetMyWork([FromQuery] GetMyWorkQuery query) {
+            var result = await Mediator.Send(query);
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Get waste reports near a specific location within a given radius
         /// </summary>
         /// <param name="query">Location coordinates (latitude, longitude) and search radius in kilometers</param>
