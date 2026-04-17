@@ -51,6 +51,16 @@ services:
       - CloudinarySettings__CloudName=${CLOUDINARY_CLOUD_NAME}
       - CloudinarySettings__ApiKey=${CLOUDINARY_API_KEY}
       - CloudinarySettings__ApiSecret=${CLOUDINARY_API_SECRET}
+      - HangfireSettings__DashboardPath=${HANGFIRE_DASHBOARD_PATH:-/jobs}
+      - HangfireSettings__Username=${HANGFIRE_USERNAME}
+      - HangfireSettings__Password=${HANGFIRE_PASSWORD}
+      - MailOptions__DisplayName=${MAIL_DISPLAY_NAME}
+      - MailOptions__Mail=${MAIL_ADDRESS}
+      - MailOptions__Password=${MAIL_PASSWORD}
+      - MailOptions__Host=${MAIL_HOST}
+      - MailOptions__Port=${MAIL_PORT:-587}
+      - VerificationCodeOptions__EmailExpireInMinutes=${VERIFICATION_EMAIL_EXPIRE_MINUTES:-15}
+      - VerificationCodeOptions__CodeLength=${VERIFICATION_CODE_LENGTH:-6}
     ports:
       - "${API_EXTERNAL_PORT:-44000}:8080"
     depends_on:

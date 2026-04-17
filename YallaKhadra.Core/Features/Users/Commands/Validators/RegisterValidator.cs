@@ -36,7 +36,7 @@ namespace YallaKhadra.Core.Features.Users.Commands.Validators {
             RuleFor(x => x.Password)
                 .NotEmpty().WithMessage("{PropertyName} can't be empty")
                 .NotNull().WithMessage("{PropertyName} can't be null")
-                .MinimumLength(3).WithMessage("{PropertyName} must be at least of length 3");
+                .MinimumLength(8).WithMessage("{PropertyName} must be at least of length 8");
 
             RuleFor(x => x.ConfirmPassword)
                 .NotEmpty().WithMessage("{PropertyName} can't be empty")

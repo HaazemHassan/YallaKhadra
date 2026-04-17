@@ -71,7 +71,21 @@ public class AuthenticationCommandHandler : ResponseHandler,
             if (authResult.Status != ServiceOperationStatus.Succeeded || authResult.Data is null)
                 return BadRequest<AuthResult>(authResult.ErrorMessage ?? "Something went wrong");
 
-            authResult.Data.User = _mapper.Map<GetUserByIdResponse>(userFromDb);
+            var userRoles = await _userManager.GetRolesAsync(userFromDb);
+            var mappedUser = _mapper.Map<GetUserByIdResponse>(userFromDb);
+            var parsedRoles = new List<UserRole>();
+
+            foreach (var roleName in userRoles)
+            {
+                if (Enum.TryParse<UserRole>(roleName, true, out var parsedRole))
+                {
+                    parsedRoles.Add(parsedRole);
+                }
+            }
+
+            mappedUser.Roles = parsedRoles;
+
+            authResult.Data.User = mappedUser;
             return Success(authResult.Data);
         }
         catch (Exception ex)
@@ -98,7 +112,24 @@ public class AuthenticationCommandHandler : ResponseHandler,
                 .Include(u => u.ProfileImage)
                 .FirstOrDefaultAsync(u => u.Id == authResult.Data.RefreshToken!.UserId, cancellationToken);
 
-            authResult.Data.User = _mapper.Map<GetUserByIdResponse>(user);
+            if (user is null)
+                return Unauthorized<AuthResult>("Invalid token");
+
+            var userRoles = await _userManager.GetRolesAsync(user);
+            var mappedUser = _mapper.Map<GetUserByIdResponse>(user);
+            var parsedRoles = new List<UserRole>();
+
+            foreach (var roleName in userRoles)
+            {
+                if (Enum.TryParse<UserRole>(roleName, true, out var parsedRole))
+                {
+                    parsedRoles.Add(parsedRole);
+                }
+            }
+
+            mappedUser.Roles = parsedRoles;
+
+            authResult.Data.User = mappedUser;
             return Success(authResult.Data);
         }
         catch (Exception ex)

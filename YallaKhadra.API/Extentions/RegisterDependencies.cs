@@ -20,11 +20,14 @@ using YallaKhadra.Services;
 
 
 
-namespace YallaKhadra.API.Extentions {
-    public static class RegisterDependencies {
+namespace YallaKhadra.API.Extentions
+{
+    public static class RegisterDependencies
+    {
         private const string GuestIdKey = "GuestId";   // used for ratelimiting
 
-        public static IServiceCollection DependenciesRegistration(this IServiceCollection services, IConfiguration configuration) {
+        public static IServiceCollection DependenciesRegistration(this IServiceCollection services, IConfiguration configuration)
+        {
             //API Layer Dependency Registrations
             services.AddTransient<ICurrentUserService, CurrentUserService>();
             services.AddTransient<IClientContextService, ClientContextService>();
@@ -50,7 +53,8 @@ namespace YallaKhadra.API.Extentions {
         }
 
 
-        private static IServiceCollection SwaggerServiceConfiguations(this IServiceCollection services, IConfiguration configuration) {
+        private static IServiceCollection SwaggerServiceConfiguations(this IServiceCollection services, IConfiguration configuration)
+        {
             // Swagger Configuration
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(options => {
@@ -65,7 +69,8 @@ namespace YallaKhadra.API.Extentions {
 
                 var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                if (File.Exists(xmlPath)) {
+                if (File.Exists(xmlPath))
+                {
                     options.IncludeXmlComments(xmlPath);
                 }
 
@@ -95,7 +100,8 @@ namespace YallaKhadra.API.Extentions {
         }
 
 
-        private static IServiceCollection AuthenticationServiceConfiguations(this IServiceCollection services, IConfiguration configuration) {
+        private static IServiceCollection AuthenticationServiceConfiguations(this IServiceCollection services, IConfiguration configuration)
+        {
             //JWT Authentication
             var jwtSettings = new JwtSettings();
             configuration.GetSection(nameof(jwtSettings)).Bind(jwtSettings);
@@ -127,7 +133,8 @@ namespace YallaKhadra.API.Extentions {
 
             return services;
         }
-        private static IServiceCollection AutorizationServiceConfiguations(this IServiceCollection services, IConfiguration configuration) {
+        private static IServiceCollection AutorizationServiceConfiguations(this IServiceCollection services, IConfiguration configuration)
+        {
             services.AddAuthorization(options => {
                 options.AddPolicy(AuthorizationPolicies.ResetPassword, policy => {
                     policy.RequireAuthenticatedUser();
@@ -144,7 +151,8 @@ namespace YallaKhadra.API.Extentions {
         }
 
         public static IServiceCollection RateLimitingDependencyConfigurations(
-         this IServiceCollection services, IConfiguration configuration) {
+         this IServiceCollection services, IConfiguration configuration)
+        {
 
             services.AddRateLimiter(options => {
                 options.AddPolicy("defaultLimiter", httpContext => {
@@ -163,8 +171,8 @@ namespace YallaKhadra.API.Extentions {
 
                     return RateLimitPartition.GetSlidingWindowLimiter(partitionKey, key => new SlidingWindowRateLimiterOptions {
                         Window = TimeSpan.FromMinutes(1),
-                        PermitLimit = 90,
-                        QueueLimit = 10,
+                        PermitLimit = 500,
+                        QueueLimit = 50,
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                         SegmentsPerWindow = 4
                     });
@@ -182,7 +190,7 @@ namespace YallaKhadra.API.Extentions {
 
                     return RateLimitPartition.GetSlidingWindowLimiter(partitionKey, key => new SlidingWindowRateLimiterOptions {
                         Window = TimeSpan.FromMinutes(1),
-                        PermitLimit = 5,
+                        PermitLimit = 50,
                         QueueLimit = 0,
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                         SegmentsPerWindow = 4
@@ -190,7 +198,8 @@ namespace YallaKhadra.API.Extentions {
                 });
 
                 options.OnRejected = async (context, token) => {
-                    if (context.HttpContext.Response.HasStarted) {
+                    if (context.HttpContext.Response.HasStarted)
+                    {
                         return;
                     }
 
@@ -198,7 +207,8 @@ namespace YallaKhadra.API.Extentions {
                     context.HttpContext.Response.ContentType = "application/json";
 
                     int retryAfterSeconds = 60;
-                    if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)) {
+                    if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+                    {
                         retryAfterSeconds = (int)Math.Ceiling(retryAfter.TotalSeconds);
                     }
                     context.HttpContext.Response.Headers.RetryAfter = retryAfterSeconds.ToString();
@@ -217,13 +227,15 @@ namespace YallaKhadra.API.Extentions {
 
             return services;
 
-            string GetFallbackPartitionKey(HttpContext httpContext) {
+            string GetFallbackPartitionKey(HttpContext httpContext)
+            {
                 var clientContextService = httpContext.RequestServices.GetRequiredService<IClientContextService>();
                 var ip = clientContextService.GetClientIpAddress();
                 var userAgent = httpContext.Request.Headers["User-Agent"].FirstOrDefault() ?? "unknown";
 
                 var identifier = $"{ip}-{userAgent}";
-                using (var sha256 = SHA256.Create()) {
+                using (var sha256 = SHA256.Create())
+                {
                     var bytes = Encoding.UTF8.GetBytes(identifier);
                     var hash = sha256.ComputeHash(bytes);
                     return Convert.ToBase64String(hash);
@@ -232,7 +244,8 @@ namespace YallaKhadra.API.Extentions {
         }
 
 
-        private static IServiceCollection CloudnServiceConfiguations(this IServiceCollection services, IConfiguration configuration) {
+        private static IServiceCollection CloudnServiceConfiguations(this IServiceCollection services, IConfiguration configuration)
+        {
             services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
             return services;
         }
