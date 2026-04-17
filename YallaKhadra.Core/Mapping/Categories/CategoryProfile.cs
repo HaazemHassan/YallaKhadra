@@ -9,6 +9,7 @@ namespace YallaKhadra.Core.Mapping.Categories {
         public CategoryProfile() {
             CreateMap<Category, GetCategoryByIdResponse>();
             CreateMap<Category, GetCategoryByNameResponse>();
+            CreateMap<Category, GetCategoriesPaginatedResponse>();
 
             CreateMap<Product, ProductInCategoryDto>()
                 .ForMember(
