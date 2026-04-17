@@ -78,6 +78,7 @@ namespace YallaKhadra.API
 
                 await ApplicationRoleSeeder.SeedAsync(roleManager);
                 await ApplicationUserSeeder.SeedAsync(userManager);
+                await ECommerceSeeder.SeedAsync(context);
 
             }
             #endregion

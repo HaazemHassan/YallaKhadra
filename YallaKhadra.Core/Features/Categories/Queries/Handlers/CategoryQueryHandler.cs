@@ -67,7 +67,14 @@ namespace YallaKhadra.Core.Features.Categories.Queries.Handlers {
             try {
                 var categoriesQueryable = _categoryRepository
                     .GetTableNoTracking()
-                    .OrderByDescending(c => c.CreatedAt);
+                    .AsQueryable();
+
+                if (!string.IsNullOrWhiteSpace(request.SearchTerm)) {
+                    var searchTerm = request.SearchTerm.Trim();
+                    categoriesQueryable = categoriesQueryable.Where(c => c.Name.Contains(searchTerm));
+                }
+
+                categoriesQueryable = categoriesQueryable.OrderByDescending(c => c.Id);
 
                 var paginatedResult = await categoriesQueryable
                     .ProjectTo<GetCategoriesPaginatedResponse>(_mapper.ConfigurationProvider)

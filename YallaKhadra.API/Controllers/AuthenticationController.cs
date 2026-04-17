@@ -19,11 +19,14 @@ namespace YallaKhadra.API.Controllers
     {
         private readonly JwtSettings _jwtSettings;
         private readonly IClientContextService _clientContextService;
+        private readonly IWebHostEnvironment _environment;
 
-        public AuthenticationController(JwtSettings jwtSettings, IClientContextService clientContextService)
+
+        public AuthenticationController(JwtSettings jwtSettings, IClientContextService clientContextService, IWebHostEnvironment environment)
         {
             _jwtSettings = jwtSettings;
             _clientContextService = clientContextService;
+            _environment = environment;
         }
 
 
@@ -249,10 +252,13 @@ namespace YallaKhadra.API.Controllers
 
             if (_clientContextService.IsWebClient())
             {
+
+                var isDevelopment = _environment.IsDevelopment();
+
                 var cookieOptions = new CookieOptions {
                     HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.None,
+                    Secure = !isDevelopment,
+                    SameSite = isDevelopment ? SameSiteMode.Lax : SameSiteMode.None,
                     Path = "/api/authentication",
                     Expires = result.Data.RefreshToken.ExpirationDate
                 };
