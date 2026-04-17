@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using YallaKhadra.Core.Abstracts.InfrastructureAbstracts;
@@ -9,7 +10,8 @@ using YallaKhadra.Core.Features.Categories.Queries.Responses;
 namespace YallaKhadra.Core.Features.Categories.Queries.Handlers {
     public class CategoryQueryHandler : ResponseHandler,
                                         IRequestHandler<GetCategoryByIdQuery, Response<GetCategoryByIdResponse>>,
-                                        IRequestHandler<GetCategoryByNameQuery, Response<GetCategoryByNameResponse>> {
+                                        IRequestHandler<GetCategoryByNameQuery, Response<GetCategoryByNameResponse>>,
+                                        IRequestHandler<GetCategoriesPaginatedQuery, PaginatedResult<GetCategoriesPaginatedResponse>> {
 
         private readonly ICategoryRepository _categoryRepository;
         private readonly IMapper _mapper;
@@ -56,6 +58,25 @@ namespace YallaKhadra.Core.Features.Categories.Queries.Handlers {
             }
             catch (Exception ex) {
                 return BadRequest<GetCategoryByNameResponse>($"An error occurred: {ex.Message}");
+            }
+        }
+
+        public async Task<PaginatedResult<GetCategoriesPaginatedResponse>> Handle(
+            GetCategoriesPaginatedQuery request,
+            CancellationToken cancellationToken) {
+            try {
+                var categoriesQueryable = _categoryRepository
+                    .GetTableNoTracking()
+                    .OrderByDescending(c => c.CreatedAt);
+
+                var paginatedResult = await categoriesQueryable
+                    .ProjectTo<GetCategoriesPaginatedResponse>(_mapper.ConfigurationProvider)
+                    .ToPaginatedResultAsync(request.PageNumber, request.PageSize);
+
+                return paginatedResult;
+            }
+            catch (Exception ex) {
+                return PaginatedResult<GetCategoriesPaginatedResponse>.Failure($"An error occurred: {ex.Message}");
             }
         }
 

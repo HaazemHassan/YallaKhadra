@@ -15,6 +15,21 @@ namespace YallaKhadra.API.Controllers {
     public class CategoryController : BaseController {
 
         /// <summary>
+        /// Get all categories with pagination
+        /// </summary>
+        /// <param name="query">Pagination parameters including page number and page size</param>
+        /// <returns>Paginated list of categories</returns>
+        /// <response code="200">Returns paginated list of categories</response>
+        /// <response code="400">Invalid pagination parameters</response>
+        [HttpGet]
+        [ProducesResponseType(typeof(PaginatedResult<GetCategoriesPaginatedResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetAll([FromQuery] GetCategoriesPaginatedQuery query) {
+            var result = await Mediator.Send(query);
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Get category by its unique identifier
         /// </summary>
         /// <param name="id">Category ID</param>
