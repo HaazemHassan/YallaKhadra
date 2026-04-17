@@ -52,8 +52,16 @@ namespace YallaKhadra.Core.Features.Products.Queries.Handlers {
                     .Include(p => p.Images)
                     .AsQueryable();
 
+                if (!string.IsNullOrWhiteSpace(request.SearchTerm)) {
+                    var searchTerm = request.SearchTerm.Trim();
+                    productsQueryable = productsQueryable.Where(p => p.Name.Contains(searchTerm));
+                }
+
                 if (request.CategoryId.HasValue)
                     productsQueryable = productsQueryable.Where(p => p.CategoryId == request.CategoryId.Value);
+
+                if (request.IsActive.HasValue)
+                    productsQueryable = productsQueryable.Where(p => p.IsActive == request.IsActive.Value);
 
 
                 productsQueryable = productsQueryable.OrderByDescending(p => p.CreatedAt);
