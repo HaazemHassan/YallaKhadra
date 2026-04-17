@@ -5,6 +5,34 @@
     "FirstName": "superadmin",
     "LastName": "superadmin",
     "EmailConfirmed": true,
-    "PhoneNumberConfirmed": true
+    "PhoneNumberConfirmed": true,
+    "Role": "SuperAdmin"
+  },
+  {
+    "Email": "admin@project.com",
+    "UserName": "admin@project.com",
+    "FirstName": "admin",
+    "LastName": "admin",
+    "EmailConfirmed": true,
+    "PhoneNumberConfirmed": true,
+    "Role": "Admin"
+  },
+  {
+    "Email": "worker@project.com",
+    "UserName": "worker@project.com",
+    "FirstName": "worker",
+    "LastName": "worker",
+    "EmailConfirmed": true,
+    "PhoneNumberConfirmed": true,
+    "Role": "Worker"
+  },
+  {
+    "Email": "user@project.com",
+    "UserName": "user@project.com",
+    "FirstName": "user",
+    "LastName": "user",
+    "EmailConfirmed": true,
+    "PhoneNumberConfirmed": true,
+    "Role": "User"
   }
 ]
