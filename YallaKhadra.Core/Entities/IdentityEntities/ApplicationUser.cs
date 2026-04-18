@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using YallaKhadra.Core.Entities.E_CommerceEntities;
 using YallaKhadra.Core.Entities.PointsEntities;
 
 namespace YallaKhadra.Core.Entities.IdentityEntities {
@@ -20,6 +21,7 @@ namespace YallaKhadra.Core.Entities.IdentityEntities {
         public virtual ICollection<RefreshToken> RefreshTokens { get; set; }
         public virtual ICollection<PointsTransaction> PointsTransactions { get; set; }
         public virtual ICollection<VerificationCode> VerificationCodes { get; set; }
+        public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
     }
 }

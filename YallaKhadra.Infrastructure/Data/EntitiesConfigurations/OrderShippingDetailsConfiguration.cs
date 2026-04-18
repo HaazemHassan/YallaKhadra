@@ -9,9 +9,6 @@ namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations {
 
             builder.HasKey(sd => sd.Id);
 
-            builder.Property(sd => sd.OrderId)
-                   .IsRequired();
-
             builder.Property(sd => sd.FullName)
                    .IsRequired()
                    .HasMaxLength(100);
@@ -37,13 +34,6 @@ namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations {
             builder.Property(sd => sd.ShippingNotes)
                    .HasMaxLength(500);
 
-            builder.HasOne(sd => sd.Order)
-                   .WithOne(o => o.ShippingDetails)
-                   .HasForeignKey<OrderShippingDetails>(sd => sd.OrderId)
-                   .OnDelete(DeleteBehavior.Cascade);
-
-            builder.HasIndex(sd => sd.OrderId)
-                   .IsUnique();
         }
     }
 }

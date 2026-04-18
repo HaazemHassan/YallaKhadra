@@ -21,10 +21,18 @@ namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations {
             builder.Property(o => o.Status)
                    .IsRequired();
 
+            builder.Property(o => o.ShippingDetailsId)
+                   .IsRequired();
+
+            builder.HasOne(o => o.ApplicationUser)
+                   .WithMany(u => u.Orders)
+                   .HasForeignKey(o => o.UserId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
             builder.HasOne(o => o.ShippingDetails)
                    .WithOne(sd => sd.Order)
-                   .HasForeignKey<OrderShippingDetails>(sd => sd.OrderId)
-                   .OnDelete(DeleteBehavior.Cascade);
+                   .HasForeignKey<Order>(o => o.ShippingDetailsId)
+                   .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasMany(o => o.OrderItems)
                    .WithOne(oi => oi.Order)
@@ -34,6 +42,8 @@ namespace YallaKhadra.Infrastructure.Data.EntitiesConfigurations {
             builder.HasIndex(o => o.UserId);
             builder.HasIndex(o => o.OrderDate);
             builder.HasIndex(o => o.Status);
+            builder.HasIndex(o => o.ShippingDetailsId)
+                   .IsUnique();
         }
     }
 }

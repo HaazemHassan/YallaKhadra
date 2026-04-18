@@ -8,12 +8,14 @@ using YallaKhadra.Core.Features.Orders.Commands.Responses;
 using YallaKhadra.Core.Features.Orders.Queries.Models;
 using YallaKhadra.Core.Features.Orders.Queries.Responses;
 
-namespace YallaKhadra.API.Controllers {
+namespace YallaKhadra.API.Controllers
+{
     /// <summary>
     /// Orders controller for managing user orders and checkout
     /// </summary>
     [Authorize(Roles = nameof(UserRole.User))]
-    public class OrderController : BaseController {
+    public class OrderController : BaseController
+    {
 
         /// <summary>
         /// Checkout and create a new order from selected cart items
@@ -29,7 +31,8 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> Checkout([FromBody] PlaceOrderCommand command) {
+        public async Task<IActionResult> Checkout([FromBody] PlaceOrderCommand command)
+        {
             var result = await Mediator.Send(command);
             return NewResult(result);
         }
@@ -46,7 +49,8 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(typeof(PaginatedResult<GetMyOrdersResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> GetMyOrders([FromQuery] GetMyOrdersQuery query) {
+        public async Task<IActionResult> GetMyOrders([FromQuery] GetMyOrdersQuery query)
+        {
             var result = await Mediator.Send(query);
             return Ok(result);
         }
@@ -63,7 +67,8 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(typeof(Response<GetOrderDetailsResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> GetOrderById(int id) {
+        public async Task<IActionResult> GetOrderById(int id)
+        {
             var query = new GetOrderByIdQuery { Id = id };
             var result = await Mediator.Send(query);
             return NewResult(result);
@@ -83,7 +88,8 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> CancelOrder(int id) {
+        public async Task<IActionResult> CancelOrder(int id)
+        {
             var command = new CancelOrderCommand { OrderId = id };
             var result = await Mediator.Send(command);
             return NewResult(result);

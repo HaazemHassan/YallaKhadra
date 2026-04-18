@@ -37,7 +37,7 @@ namespace YallaKhadra.API
 
             builder.Services.AddCors(options => {
                 options.AddPolicy("AngularClientPolicy", policy => {
-                    policy.WithOrigins("http://localhost:4200")
+                    policy.WithOrigins("http://localhost:31000")
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();

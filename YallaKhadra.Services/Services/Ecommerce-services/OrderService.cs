@@ -150,11 +150,12 @@ namespace YallaKhadra.Services.Services.Ecommerce_services {
         public async Task<ServiceOperationResult> CancelOrderAsync(
             int orderId,
             int userId,
+            bool isAdmin,
             CancellationToken cancellationToken = default) {
 
             // 1. Get order with all related data
             var order = await _orderRepository
-                .GetTableAsTracking(o => o.Id == orderId && o.UserId == userId)
+                .GetTableAsTracking(o => o.Id == orderId && (isAdmin || o.UserId == userId))
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Product)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -182,7 +183,7 @@ namespace YallaKhadra.Services.Services.Ecommerce_services {
 
             // 5. Refund points to user
             var refundResult = await _pointsTransactionService.EarnPointsAsync(
-                userId,
+                order.UserId,
                 order.TotalPoints,
                 PointsSourceType.EcoStore,
                 order.Id,
@@ -194,6 +195,42 @@ namespace YallaKhadra.Services.Services.Ecommerce_services {
                     refundResult.ErrorMessage ?? "Failed to refund points.");
 
             return ServiceOperationResult.Success();
+        }
+
+        public async Task<ServiceOperationResult<OrderStatus>> AdvanceOrderStatusAsync(
+            int orderId,
+            CancellationToken cancellationToken = default) {
+
+            var order = await _orderRepository
+                .GetTableAsTracking(o => o.Id == orderId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (order is null)
+                return ServiceOperationResult<OrderStatus>.Failure(
+                    ServiceOperationStatus.NotFound,
+                    $"Order with ID {orderId} not found.")!;
+
+            if (order.Status == OrderStatus.Delivered || order.Status == OrderStatus.Canceled)
+                return ServiceOperationResult<OrderStatus>.Failure(
+                    ServiceOperationStatus.Failed,
+                    $"Order cannot be advanced. Current status: {order.Status}")!;
+
+            var nextStatus = order.Status switch {
+                OrderStatus.Pending => OrderStatus.Processing,
+                OrderStatus.Processing => OrderStatus.Shipped,
+                OrderStatus.Shipped => OrderStatus.Delivered,
+                _ => order.Status
+            };
+
+            if (nextStatus == order.Status)
+                return ServiceOperationResult<OrderStatus>.Failure(
+                    ServiceOperationStatus.Failed,
+                    $"Order cannot be advanced. Current status: {order.Status}")!;
+
+            order.UpdateStatus(nextStatus);
+            _orderRepository.UpdateWithoutSave(order);
+
+            return ServiceOperationResult<OrderStatus>.Success(nextStatus)!;
         }
     }
 }

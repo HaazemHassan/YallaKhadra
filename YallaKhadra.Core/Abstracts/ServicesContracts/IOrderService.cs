@@ -1,5 +1,6 @@
 using YallaKhadra.Core.Bases;
 using YallaKhadra.Core.Entities.E_CommerceEntities;
+using YallaKhadra.Core.Enums;
 
 namespace YallaKhadra.Core.Abstracts.ServicesContracts {
     public interface IOrderService {
@@ -17,6 +18,11 @@ namespace YallaKhadra.Core.Abstracts.ServicesContracts {
         Task<ServiceOperationResult> CancelOrderAsync(
             int orderId,
             int userId,
+            bool isAdmin,
+            CancellationToken cancellationToken = default);
+
+        Task<ServiceOperationResult<OrderStatus>> AdvanceOrderStatusAsync(
+            int orderId,
             CancellationToken cancellationToken = default);
     }
 }

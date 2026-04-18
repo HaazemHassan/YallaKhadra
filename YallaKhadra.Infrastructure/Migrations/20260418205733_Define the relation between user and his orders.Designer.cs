@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using YallaKhadra.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using YallaKhadra.Infrastructure.Data;
 namespace YallaKhadra.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260418205733_Define the relation between user and his orders")]
+    partial class Definetherelationbetweenuserandhisorders
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -275,9 +278,6 @@ namespace YallaKhadra.Infrastructure.Migrations
 
                     b.HasIndex("OrderDate");
 
-                    b.HasIndex("ShippingDetailsId")
-                        .IsUnique();
-
                     b.HasIndex("Status");
 
                     b.HasIndex("UserId");
@@ -340,6 +340,9 @@ namespace YallaKhadra.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -355,6 +358,9 @@ namespace YallaKhadra.Infrastructure.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
 
                     b.ToTable("OrderShippingDetails", "ecommerce");
                 });
@@ -883,12 +889,6 @@ namespace YallaKhadra.Infrastructure.Migrations
 
             modelBuilder.Entity("YallaKhadra.Core.Entities.E_CommerceEntities.Order", b =>
                 {
-                    b.HasOne("YallaKhadra.Core.Entities.E_CommerceEntities.OrderShippingDetails", "ShippingDetails")
-                        .WithOne("Order")
-                        .HasForeignKey("YallaKhadra.Core.Entities.E_CommerceEntities.Order", "ShippingDetailsId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("YallaKhadra.Core.Entities.IdentityEntities.ApplicationUser", "ApplicationUser")
                         .WithMany("Orders")
                         .HasForeignKey("UserId")
@@ -896,8 +896,6 @@ namespace YallaKhadra.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("ApplicationUser");
-
-                    b.Navigation("ShippingDetails");
                 });
 
             modelBuilder.Entity("YallaKhadra.Core.Entities.E_CommerceEntities.OrderItem", b =>
@@ -917,6 +915,17 @@ namespace YallaKhadra.Infrastructure.Migrations
                     b.Navigation("Order");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("YallaKhadra.Core.Entities.E_CommerceEntities.OrderShippingDetails", b =>
+                {
+                    b.HasOne("YallaKhadra.Core.Entities.E_CommerceEntities.Order", "Order")
+                        .WithOne("ShippingDetails")
+                        .HasForeignKey("YallaKhadra.Core.Entities.E_CommerceEntities.OrderShippingDetails", "OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("YallaKhadra.Core.Entities.E_CommerceEntities.Product", b =>
@@ -1104,11 +1113,8 @@ namespace YallaKhadra.Infrastructure.Migrations
             modelBuilder.Entity("YallaKhadra.Core.Entities.E_CommerceEntities.Order", b =>
                 {
                     b.Navigation("OrderItems");
-                });
 
-            modelBuilder.Entity("YallaKhadra.Core.Entities.E_CommerceEntities.OrderShippingDetails", b =>
-                {
-                    b.Navigation("Order")
+                    b.Navigation("ShippingDetails")
                         .IsRequired();
                 });
 

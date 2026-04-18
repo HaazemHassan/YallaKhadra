@@ -1,9 +1,11 @@
 ﻿using YallaKhadra.Core.Entities.BaseEntities;
+using YallaKhadra.Core.Entities.IdentityEntities;
 using YallaKhadra.Core.Enums;
 
 namespace YallaKhadra.Core.Entities.E_CommerceEntities {
     public class Order : BaseEntity<int> {
         public int UserId { get; set; }
+        public virtual ApplicationUser ApplicationUser { get; set; } = null!;
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
         public int TotalPoints { get; set; }
         public OrderStatus Status { get; set; } = OrderStatus.Pending;

@@ -2,7 +2,6 @@
 
 namespace YallaKhadra.Core.Entities.E_CommerceEntities {
     public class OrderShippingDetails : BaseEntity<int> {
-        public int OrderId { get; set; }
         public virtual Order Order { get; set; } = null!;
 
         public string FullName { get; set; } = string.Empty;
