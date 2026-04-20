@@ -27,6 +27,15 @@
     "Role": "Worker"
   },
   {
+    "Email": "mostafa.hussein963@gmail.com",
+    "UserName": "mostafa.hussein963@gmail.com",
+    "FirstName": "Neymar",
+    "LastName": "el7lw",
+    "EmailConfirmed": true,
+    "PhoneNumberConfirmed": true,
+    "Role": "Worker"
+  },
+  {
     "Email": "user@project.com",
     "UserName": "user@project.com",
     "FirstName": "user",

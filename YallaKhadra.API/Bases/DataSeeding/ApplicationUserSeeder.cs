@@ -13,12 +13,35 @@ namespace YallaKhadra.API.Bases.DataSeeding
             string usersJson = await File.ReadAllTextAsync("ApplicationUsers.json");
             List<SeedApplicationUser>? users = JsonSerializer.Deserialize<List<SeedApplicationUser>>(usersJson);
 
-            int rolesInDb = await _userManager.Users.CountAsync();
-            if (users is null || rolesInDb > 0)
+            if (users is null || users.Count == 0)
                 return;
+
+            var existingKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            var existingEmails = await _userManager.Users
+                .Where(u => u.Email != null)
+                .Select(u => u.Email!)
+                .ToListAsync();
+
+            var existingUserNames = await _userManager.Users
+                .Where(u => u.UserName != null)
+                .Select(u => u.UserName!)
+                .ToListAsync();
+
+            foreach (var email in existingEmails)
+                existingKeys.Add($"email:{email}");
+
+            foreach (var userName in existingUserNames)
+                existingKeys.Add($"username:{userName}");
 
             foreach (var user in users)
             {
+                string emailKey = $"email:{user.Email}";
+                string userNameKey = $"username:{user.UserName}";
+
+                if (existingKeys.Contains(emailKey) || existingKeys.Contains(userNameKey))
+                    continue;
+
                 var appUser = new ApplicationUser {
                     Email = user.Email,
                     UserName = user.UserName,
@@ -28,7 +51,12 @@ namespace YallaKhadra.API.Bases.DataSeeding
                     PhoneNumberConfirmed = user.PhoneNumberConfirmed
                 };
 
-                await _userManager.CreateAsync(appUser, "12345678");
+                var createResult = await _userManager.CreateAsync(appUser, "12345678");
+                if (!createResult.Succeeded)
+                    continue;
+
+                existingKeys.Add(emailKey);
+                existingKeys.Add(userNameKey);
 
                 var role = Enum.TryParse<UserRole>(user.Role, true, out var parsedRole)
                     ? parsedRole.ToString()
