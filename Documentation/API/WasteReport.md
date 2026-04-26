@@ -199,11 +199,12 @@ Create a new waste report with location details, waste type, and optional images
 
 ### Endpoint
 ```http
-GET /api/wastereport?PageNumber={pageNumber}&PageSize={pageSize}
+GET /api/wastereport?PageNumber={pageNumber}&PageSize={pageSize}&Status={status}
 ```
 
 ### Description
 Get a list of all waste reports with pagination support, sorted by creation date (newest first).
+Supports optional filtering by report status.
 
 ### Authentication
 - **Required**: `SuperAdmin` or `Admin`
@@ -215,6 +216,7 @@ Get a list of all waste reports with pagination support, sorted by creation date
 |-----------|------|----------|------------------|
 | `PageNumber` | int | ❌ | - **Optional**<br>- **Min Value**: 1<br>- **Default**: 1<br>- Requested page number |
 | `PageSize` | int | ❌ | - **Optional**<br>- **Min Value**: 1<br>- **Default**: 10<br>- Number of items per page |
+| `Status` | enum (`ReportStatus`) | ❌ | - **Optional**<br>- Filters reports by status<br>- Allowed values: `Pending (0)`, `InProgress (1)`, `Done (2)` |
 
 ### Response Codes
 
