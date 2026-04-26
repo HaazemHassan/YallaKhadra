@@ -12,7 +12,8 @@ using YallaKhadra.Core.Enums;
 using YallaKhadra.Core.Features.Users.Queries.Models;
 using YallaKhadra.Core.Features.Users.Queries.Responses;
 
-namespace YallaKhadra.Core.Features.Users.Queries.Handlers {
+namespace YallaKhadra.Core.Features.Users.Queries.Handlers
+{
     public class UserQueryHandler : ResponseHandler,
                                     IRequestHandler<GetUsersPaginatedQuery, PaginatedResult<GetUsersPaginatedResponse>>,
                                     IRequestHandler<GetUsersByRoleQuery, PaginatedResult<GetUsersByRoleResponse>>,
@@ -20,7 +21,8 @@ namespace YallaKhadra.Core.Features.Users.Queries.Handlers {
                                     IRequestHandler<GetWorkerDetailsQuery, Response<GetWorkerDetailsResponse>>,
 
                                     IRequestHandler<GetUserByIdQuery, Response<GetUserByIdResponse>>,
-                                    IRequestHandler<CheckEmailAvailabilityQuery, Response<bool>> {
+                                    IRequestHandler<CheckEmailAvailabilityQuery, Response<bool>>
+    {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMapper _mapper;
         private readonly IApplicationUserService _applicationUserService;
@@ -28,7 +30,8 @@ namespace YallaKhadra.Core.Features.Users.Queries.Handlers {
         private readonly IWasteReportRepository _wasteReportRepository;
         private readonly ICleanupTaskRepository _cleanupTaskRepository;
 
-        public UserQueryHandler(UserManager<ApplicationUser> userManager, IMapper mapper, IApplicationUserService applicationUserService, ICurrentUserService currentUserService, IWasteReportRepository wasteReportRepository, ICleanupTaskRepository cleanupTaskRepository) {
+        public UserQueryHandler(UserManager<ApplicationUser> userManager, IMapper mapper, IApplicationUserService applicationUserService, ICurrentUserService currentUserService, IWasteReportRepository wasteReportRepository, ICleanupTaskRepository cleanupTaskRepository)
+        {
             _userManager = userManager;
             _mapper = mapper;
             _applicationUserService = applicationUserService;
@@ -37,23 +40,30 @@ namespace YallaKhadra.Core.Features.Users.Queries.Handlers {
             _cleanupTaskRepository = cleanupTaskRepository;
         }
 
-        public async Task<PaginatedResult<GetUsersPaginatedResponse>> Handle(GetUsersPaginatedQuery request, CancellationToken cancellationToken) {
-            try {
+        public async Task<PaginatedResult<GetUsersPaginatedResponse>> Handle(GetUsersPaginatedQuery request, CancellationToken cancellationToken)
+        {
+            try
+            {
                 var usersQuerable = _userManager.Users.Include(u => u.ProfileImage);
                 var usersPaginatedResult = await usersQuerable.ProjectTo<GetUsersPaginatedResponse>(_mapper.ConfigurationProvider)
                                     .ToPaginatedResultAsync(request.PageNumber, request.PageSize);
                 return usersPaginatedResult;
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return PaginatedResult<GetUsersPaginatedResponse>.Failure($"An error occurred: {ex.Message}");
             }
         }
 
-        public async Task<PaginatedResult<GetUsersByRoleResponse>> Handle(GetUsersByRoleQuery request, CancellationToken cancellationToken) {
-            try {
+        public async Task<PaginatedResult<GetUsersByRoleResponse>> Handle(GetUsersByRoleQuery request, CancellationToken cancellationToken)
+        {
+            try
+            {
                 var users = await _userManager.GetUsersInRoleAsync(request.Role.ToString());
 
-                var response = users.Select(u => new GetUsersByRoleResponse {
+                var response = users.Select(u => new GetUsersByRoleResponse
+                {
+                    Id = u.Id,
                     Name = $"{u.FirstName} {u.LastName}".Trim(),
                     Email = u.Email ?? string.Empty,
                     PhoneNumber = u.PhoneNumber ?? string.Empty,
@@ -64,13 +74,16 @@ namespace YallaKhadra.Core.Features.Users.Queries.Handlers {
 
                 return await response.ToPaginatedResultAsync(request.PageNumber, request.PageSize);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return PaginatedResult<GetUsersByRoleResponse>.Failure($"An error occurred: {ex.Message}");
             }
         }
 
-        public async Task<Response<GetUserByIdResponse>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken) {
-            try {
+        public async Task<Response<GetUserByIdResponse>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
+        {
+            try
+            {
                 var user = await _userManager.Users
                     .Include(u => u.ProfileImage)
                     .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);
@@ -81,24 +94,30 @@ namespace YallaKhadra.Core.Features.Users.Queries.Handlers {
                 var userResponse = _mapper.Map<GetUserByIdResponse>(user);
                 return Success(userResponse);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return BadRequest<GetUserByIdResponse>($"An error occurred: {ex.Message}");
             }
         }
 
-        public async Task<Response<bool>> Handle(CheckEmailAvailabilityQuery request, CancellationToken cancellationToken) {
-            try {
+        public async Task<Response<bool>> Handle(CheckEmailAvailabilityQuery request, CancellationToken cancellationToken)
+        {
+            try
+            {
                 var user = await _userManager.FindByEmailAsync(request.Email);
                 bool isAvailable = user is null;
                 return Success(isAvailable, message: isAvailable ? "Email is available." : "Email is not available.");
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return BadRequest<bool>($"An error occurred: {ex.Message}");
             }
         }
 
-        public async Task<Response<GetUserDetailsResponse>> Handle(GetUserDetailsQuery request, CancellationToken cancellationToken) {
-            try {
+        public async Task<Response<GetUserDetailsResponse>> Handle(GetUserDetailsQuery request, CancellationToken cancellationToken)
+        {
+            try
+            {
                 var user = await _userManager.Users
                     .Include(u => u.ProfileImage)
                     .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);
@@ -110,19 +129,22 @@ namespace YallaKhadra.Core.Features.Users.Queries.Handlers {
 
                 var reportCounts = await userReports
                     .GroupBy(r => 1)
-                    .Select(g => new {
+                    .Select(g => new
+                    {
                         Pending = g.Count(r => r.Status == ReportStatus.Pending),
                         InProgress = g.Count(r => r.Status == ReportStatus.InProgress),
                         Done = g.Count(r => r.Status == ReportStatus.Done)
                     })
                     .FirstOrDefaultAsync(cancellationToken);
 
-                var response = new GetUserDetailsResponse {
+                var response = new GetUserDetailsResponse
+                {
                     Name = $"{user.FirstName} {user.LastName}".Trim(),
                     Email = user.Email ?? string.Empty,
                     ProfileImage = user.ProfileImage is null
                         ? null
-                        : new UserProfileImageDto {
+                        : new UserProfileImageDto
+                        {
                             Id = user.ProfileImage.Id,
                             Url = user.ProfileImage.Url
                         },
@@ -136,13 +158,16 @@ namespace YallaKhadra.Core.Features.Users.Queries.Handlers {
 
                 return Success(response);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return BadRequest<GetUserDetailsResponse>($"An error occurred: {ex.Message}");
             }
         }
 
-        public async Task<Response<GetWorkerDetailsResponse>> Handle(GetWorkerDetailsQuery request, CancellationToken cancellationToken) {
-            try {
+        public async Task<Response<GetWorkerDetailsResponse>> Handle(GetWorkerDetailsQuery request, CancellationToken cancellationToken)
+        {
+            try
+            {
                 var worker = await _userManager.Users
                     .Include(u => u.ProfileImage)
                     .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);
@@ -165,12 +190,14 @@ namespace YallaKhadra.Core.Features.Users.Queries.Handlers {
                     : completedTasks.Average(t => (t.AssignedAt - t.Report.CreatedAt).TotalHours);
                 var totalHours = completedTasks.Sum(t => (t.CompletedAt!.Value - t.AssignedAt).TotalHours);
 
-                var response = new GetWorkerDetailsResponse {
+                var response = new GetWorkerDetailsResponse
+                {
                     Name = $"{worker.FirstName} {worker.LastName}".Trim(),
                     Email = worker.Email ?? string.Empty,
                     ProfileImage = worker.ProfileImage is null
                         ? null
-                        : new UserProfileImageDto {
+                        : new UserProfileImageDto
+                        {
                             Id = worker.ProfileImage.Id,
                             Url = worker.ProfileImage.Url
                         },
@@ -183,7 +210,8 @@ namespace YallaKhadra.Core.Features.Users.Queries.Handlers {
 
                 return Success(response);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return BadRequest<GetWorkerDetailsResponse>($"An error occurred: {ex.Message}");
             }
         }
