@@ -95,7 +95,14 @@ namespace YallaKhadra.Core.Features.WasteReports.Queries.Handlers
                     .GetTableNoTracking()
                     .Include(r => r.Images)
                     .Include(r => r.User)
-                    .OrderByDescending(r => r.CreatedAt);
+                    .AsQueryable();
+
+                if (request.Status.HasValue)
+                {
+                    wasteReportsQuery = wasteReportsQuery.Where(r => r.Status == request.Status.Value);
+                }
+
+                wasteReportsQuery = wasteReportsQuery.OrderByDescending(r => r.CreatedAt);
 
                 // Project to DTO and paginate
                 var paginatedResult = await wasteReportsQuery
