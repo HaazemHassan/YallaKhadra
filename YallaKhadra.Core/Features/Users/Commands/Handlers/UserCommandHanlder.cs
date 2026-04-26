@@ -15,7 +15,8 @@ using YallaKhadra.Core.Features.Users.Commands.Responses;
 namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
     public class UserCommandHanlder : ResponseHandler, IRequestHandler<RegisterCommand, Response>,
                                                        IRequestHandler<AddUserCommand, Response<AddUserResponse>>,
-                                                       IRequestHandler<UpdateUserCommand, Response> {
+                                                       IRequestHandler<UpdateUserCommand, Response>,
+                                                       IRequestHandler<ToggleUserLockCommand, Response<ToggleUserLockResponse>> {
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
@@ -214,6 +215,41 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
 
                 await _unitOfWork.RollbackAsync();
                 return BadRequest($"An error occurred: {ex.Message}");
+            }
+        }
+
+        public async Task<Response<ToggleUserLockResponse>> Handle(ToggleUserLockCommand request, CancellationToken cancellationToken) {
+            try {
+                var user = await _userManager.FindByIdAsync(request.Id.ToString());
+                if (user is null)
+                    return NotFound<ToggleUserLockResponse>("User not found");
+
+                var isCurrentlyLocked = user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow;
+
+                if (isCurrentlyLocked) {
+                    var unlockResult = await _userManager.SetLockoutEndDateAsync(user, null);
+                    if (!unlockResult.Succeeded)
+                        return BadRequest<ToggleUserLockResponse>("Failed to unlock user.");
+                }
+                else {
+                    if (!user.LockoutEnabled) {
+                        var enableLockoutResult = await _userManager.SetLockoutEnabledAsync(user, true);
+                        if (!enableLockoutResult.Succeeded)
+                            return BadRequest<ToggleUserLockResponse>("Failed to enable lockout for user.");
+                    }
+
+                    var lockResult = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow.AddYears(100));
+                    if (!lockResult.Succeeded)
+                        return BadRequest<ToggleUserLockResponse>("Failed to lock user.");
+                }
+
+                return Success(new ToggleUserLockResponse {
+                    UserId = user.Id,
+                    IsLocked = !isCurrentlyLocked
+                }, message: isCurrentlyLocked ? "User unlocked successfully." : "User locked successfully.");
+            }
+            catch (Exception ex) {
+                return BadRequest<ToggleUserLockResponse>($"An error occurred: {ex.Message}");
             }
         }
 
