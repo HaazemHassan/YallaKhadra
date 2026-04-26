@@ -739,5 +739,305 @@ ProfileImage: [binary file data]
 }
 ```
 
+---
+
+## 7. Get All Users By Role - Get Users by Role (Paginated)
+
+### Endpoint
+```http
+GET /api/user/by-role?Role={role}&PageNumber={pageNumber}&PageSize={pageSize}
+```
+
+### Description
+Get a paginated list of users filtered by their role.
+
+### Authentication
+- **Required**: `SuperAdmin` or `Admin`
+- **Header**: `Authorization: Bearer {token}`
+
+### Query Parameters
+
+| Parameter | Type | Required | Validation Rules |
+|-----------|------|----------|------------------|
+| `Role` | enum(UserRole) | ✅ | - **Required**<br>- **Allowed Values**: `Admin`, `Worker`, `User` |
+| `PageNumber` | int? | ❌ | - **Optional**<br>- **Min Value**: 1<br>- **Default**: 1 |
+| `PageSize` | int? | ❌ | - **Optional**<br>- **Min Value**: 1<br>- **Default**: 10 |
+
+### Response Codes
+
+#### ✅ 200 OK - Query Successful
+```json
+{
+  "data": [
+    {
+      "name": "User One",
+      "email": "user1@example.com",
+      "phoneNumber": "+201234567890",
+      "address": "123 Street, City",
+      "isLocked": false,
+      "points": 100
+    },
+    {
+      "name": "Worker Two",
+      "email": "worker2@example.com",
+      "phoneNumber": "+201098765432",
+      "address": "456 Avenue, City",
+      "isLocked": true,
+      "points": null
+    }
+  ],
+  "currentPage": 1,
+  "totalPages": 3,
+  "totalCount": 25,
+  "meta": null,
+  "pageSize": 10,
+  "hasPreviousPage": false,
+  "hasNextPage": true,
+  "messages": null,
+  "succeeded": true
+}
+```
+
+**Empty Page (No Results):**
+```json
+{
+  "data": [],
+  "currentPage": 4,
+  "totalPages": 3,
+  "totalCount": 25,
+  "meta": null,
+  "pageSize": 10,
+  "hasPreviousPage": true,
+  "hasNextPage": false,
+  "messages": null,
+  "succeeded": true
+}
+```
+
+#### ❌ 400 Bad Request - Invalid Parameters
+```json
+{
+  "statusCode": 400,
+  "meta": null,
+  "succeeded": false,
+  "message": "Validation failed",
+  "errors": [
+    "Role must be Admin, Worker, or User.",
+    "'Page Number' must be greater than '0'."
+  ],
+  "data": null
+}
+```
+
+#### ❌ 401 Unauthorized - Missing Token
+```json
+{
+  "statusCode": 401,
+  "meta": null,
+  "succeeded": false,
+  "message": "Unauthorized",
+  "errors": null,
+  "data": null
+}
+```
+
+#### ❌ 403 Forbidden - Not Admin
+```json
+{
+  "statusCode": 403,
+  "meta": null,
+  "succeeded": false,
+  "message": "Access denied. Insufficient permissions.",
+  "errors": null,
+  "data": null
+}
+```
+
+---
+
+## 8. Toggle User Lock - Lock / Unlock User
+
+### Endpoint
+```http
+PATCH /api/user/{id}/toggle-lock
+```
+
+### Description
+Lock or unlock a user account.
+
+### Authentication
+- **Required**: `SuperAdmin` or `Admin`
+- **Header**: `Authorization: Bearer {token}`
+
+### Route Parameters
+
+| Parameter | Type | Required | Validation Rules |
+|-----------|------|----------|------------------|
+| `id` | int | ✅ | - **Required**<br>- **Type**: Positive integer<br>- **Constraint**: `{id:int}` in route<br>- **Example**: 1, 25, 100 |
+
+### Response Codes
+
+#### ✅ 200 OK - Toggle Successful
+```json
+{
+  "statusCode": 200,
+  "meta": null,
+  "succeeded": true,
+  "message": "User locked successfully.",
+  "errors": null,
+  "data": {
+    "userId": 25,
+    "isLocked": true
+  }
+}
+```
+
+**Unlock Example:**
+```json
+{
+  "statusCode": 200,
+  "meta": null,
+  "succeeded": true,
+  "message": "User unlocked successfully.",
+  "errors": null,
+  "data": {
+    "userId": 25,
+    "isLocked": false
+  }
+}
+```
+
+#### ❌ 404 Not Found - User Not Found
+```json
+{
+  "statusCode": 404,
+  "meta": null,
+  "succeeded": false,
+  "message": "User not found",
+  "errors": null,
+  "data": null
+}
+```
+
+#### ❌ 400 Bad Request - Invalid Data
+```json
+{
+  "statusCode": 400,
+  "meta": null,
+  "succeeded": false,
+  "message": "Validation failed",
+  "errors": [
+    "User id must be greater than 0."
+  ],
+  "data": null
+}
+```
+
+#### ❌ 401 Unauthorized - Not Logged In
+```json
+{
+  "statusCode": 401,
+  "meta": null,
+  "succeeded": false,
+  "message": "Unauthorized",
+  "errors": null,
+  "data": null
+}
+```
+
+#### ❌ 403 Forbidden - Not Admin
+```json
+{
+  "statusCode": 403,
+  "meta": null,
+  "succeeded": false,
+  "message": "Forbidden",
+  "errors": null,
+  "data": null
+}
+```
+
+---
+
+## 9. User Details - User Details Summary
+
+### Endpoint
+```http
+GET /api/user/{id}/details
+```
+
+### Description
+Get detailed user info with reports summary.
+
+### Authentication
+- **Required**: `SuperAdmin` or `Admin`
+- **Header**: `Authorization: Bearer {token}`
+
+### Route Parameters
+
+| Parameter | Type | Required | Validation Rules |
+|-----------|------|----------|------------------|
+| `id` | int | ✅ | - **Required**<br>- **Type**: Positive integer<br>- **Constraint**: `{id:int}` |
+
+### Response Data
+- `name`
+- `email`
+- `profileImage`
+- `phoneNumber`
+- `address`
+- `points`
+- `pendingReportsCount`
+- `inProgressReportsCount`
+- `doneReportsCount`
+
+### Response Codes
+- `200 OK`
+- `400 Bad Request`
+- `404 Not Found`
+- `401 Unauthorized`
+- `403 Forbidden`
+
+---
+
+## 10. Worker Details - Worker Details Summary
+
+### Endpoint
+```http
+GET /api/user/{id}/worker-details
+```
+
+### Description
+Get detailed worker info with cleanup statistics.
+
+### Authentication
+- **Required**: `SuperAdmin` or `Admin`
+- **Header**: `Authorization: Bearer {token}`
+
+### Route Parameters
+
+| Parameter | Type | Required | Validation Rules |
+|-----------|------|----------|------------------|
+| `id` | int | ✅ | - **Required**<br>- **Type**: Positive integer<br>- **Constraint**: `{id:int}` |
+
+### Response Data
+- `name`
+- `email`
+- `profileImage`
+- `phoneNumber`
+- `address`
+- `totalCleanups`
+- `avgResponseTime` (hours)
+- `totalHours` (hours)
+
+### Notes
+- لو الـ `id` مش لمستخدم بدور `Worker` هيرجع `400` برسالة إن المستخدم مش worker.
+
+### Response Codes
+- `200 OK`
+- `400 Bad Request`
+- `404 Not Found`
+- `401 Unauthorized`
+- `403 Forbidden`
+
 
 

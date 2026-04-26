@@ -6,17 +6,21 @@ using YallaKhadra.API.Filters;
 using YallaKhadra.Core.Bases.Responses;
 using YallaKhadra.Core.Enums;
 using YallaKhadra.Core.Features.Users.Commands.RequestModels;
+using YallaKhadra.Core.Features.Users.Commands.Responses;
 using YallaKhadra.Core.Features.Users.Queries.Models;
 using YallaKhadra.Core.Features.Users.Queries.Responses;
 
-namespace YallaKhadra.API.Controllers {
+namespace YallaKhadra.API.Controllers
+{
 
     /// <summary>
     /// User management controller for handling user operations
     /// </summary>
-    public class UserController : BaseController {
+    public class UserController : BaseController
+    {
         private readonly IAuthorizationService _authorizationService;
-        public UserController(IAuthorizationService authorizationService) {
+        public UserController(IAuthorizationService authorizationService)
+        {
             _authorizationService = authorizationService;
         }
 
@@ -36,7 +40,8 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> Register([FromForm] RegisterCommand command) {
+        public async Task<IActionResult> Register([FromForm] RegisterCommand command)
+        {
             var result = await Mediator.Send(command);
             return NewResult(result);
         }
@@ -53,7 +58,25 @@ namespace YallaKhadra.API.Controllers {
         [Authorize(Roles = $"{nameof(UserRole.SuperAdmin)},{nameof(UserRole.Admin)}")]
         [ProducesResponseType(typeof(PaginatedResult<GetUsersPaginatedResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetAll([FromQuery] GetUsersPaginatedQuery query) {
+        public async Task<IActionResult> GetAll([FromQuery] GetUsersPaginatedQuery query)
+        {
+            var result = await Mediator.Send(query);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Get all users by role (Admin, Worker, or User)
+        /// </summary>
+        /// <param name="query">Role filter</param>
+        /// <returns>List of users with name, email, phone, address, lock status, and points for User role</returns>
+        /// <response code="200">Returns users filtered by role</response>
+        /// <response code="400">Invalid role</response>
+        [HttpGet("by-role")]
+        [Authorize(Roles = $"{nameof(UserRole.SuperAdmin)},{nameof(UserRole.Admin)}")]
+        [ProducesResponseType(typeof(PaginatedResult<GetUsersByRoleResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetAllByRole([FromQuery] GetUsersByRoleQuery query)
+        {
             var result = await Mediator.Send(query);
             return Ok(result);
         }
@@ -71,7 +94,8 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(typeof(Response<GetUserByIdResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetById([FromRoute] int id) {
+        public async Task<IActionResult> GetById([FromRoute] int id)
+        {
             var authResult = await _authorizationService.AuthorizeAsync(User, id, AuthorizationPolicies.SameUserOrAdmin);
             if (!authResult.Succeeded)
                 return Forbid();
@@ -80,8 +104,42 @@ namespace YallaKhadra.API.Controllers {
             return NewResult(result);
         }
 
+        /// <summary>
+        /// Get detailed user information with report counts by status
+        /// </summary>
+        /// <param name="id">User ID</param>
+        /// <returns>User details with profile and reports summary</returns>
+        /// <response code="200">Returns user details</response>
+        /// <response code="404">User not found</response>
+        /// <response code="400">Invalid user ID format</response>
+        [HttpGet("{id:int}/details")]
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.SuperAdmin)}")]
+        [ProducesResponseType(typeof(Response<GetUserDetailsResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UserDetails([FromRoute] int id)
+        {
+            var result = await Mediator.Send(new GetUserDetailsQuery(id));
+            return NewResult(result);
+        }
 
-
+        /// <summary>
+        /// Get detailed worker information with cleanup statistics
+        /// </summary>
+        /// <param name="id">Worker user ID</param>
+        /// <returns>Worker details with cleanup summary</returns>
+        /// <response code="200">Returns worker details</response>
+        /// <response code="404">Worker not found</response>
+        /// <response code="400">Invalid worker ID format or user is not a worker</response>
+        [HttpGet("{id:int}/worker-details")]
+        [Authorize(Roles = $"{nameof(UserRole.SuperAdmin)},{nameof(UserRole.Admin)}")]
+        [ProducesResponseType(typeof(Response<GetWorkerDetailsResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> WorkerDetails([FromRoute] int id) {
+            var result = await Mediator.Send(new GetWorkerDetailsQuery(id));
+            return NewResult(result);
+        }
 
         /// <summary>
         /// Check if an email address is available for registration
@@ -93,7 +151,8 @@ namespace YallaKhadra.API.Controllers {
         [HttpGet("check-email/{Email}")]
         [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CheckEmailAvailability([FromRoute] CheckEmailAvailabilityQuery query) {
+        public async Task<IActionResult> CheckEmailAvailability([FromRoute] CheckEmailAvailabilityQuery query)
+        {
             var result = await Mediator.Send(query);
             return NewResult(result);
         }
@@ -103,11 +162,31 @@ namespace YallaKhadra.API.Controllers {
 
         [HttpPost("add-user")]
         [Authorize(Roles = $"{nameof(UserRole.SuperAdmin)},{nameof(UserRole.Admin)}")]
-        public async Task<IActionResult> AddUser([FromBody] AddUserCommand command) {
+        public async Task<IActionResult> AddUser([FromBody] AddUserCommand command)
+        {
             var result = await Mediator.Send(command);
             return NewResult(result);
         }
 
+
+        /// <summary>
+        /// Toggle the lock status of a user account
+        /// </summary>
+        /// <param name="id">User ID</param>
+        /// <returns>Confirmation of the updated lock status</returns>
+        /// <response code="200">User lock status updated successfully</response>
+        /// <response code="404">User not found</response>
+        /// <response code="400">Invalid user ID format</response>
+        [HttpPatch("{id:int}/toggle-lock")]
+        [Authorize(Roles = $"{nameof(UserRole.SuperAdmin)},{nameof(UserRole.Admin)}")]
+        [ProducesResponseType(typeof(Response<ToggleUserLockResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ToggleLock([FromRoute] int id)
+        {
+            var result = await Mediator.Send(new ToggleUserLockCommand { Id = id });
+            return NewResult(result);
+        }
 
         /// <summary>
         /// Update an existing user
@@ -127,7 +206,8 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> Update([FromRoute] int id, [FromForm] UpdateUserCommand command) {
+        public async Task<IActionResult> Update([FromRoute] int id, [FromForm] UpdateUserCommand command)
+        {
             var authResult = await _authorizationService.AuthorizeAsync(User, id, AuthorizationPolicies.SameUserOrAdmin);
             if (!authResult.Succeeded)
                 return Forbid();
