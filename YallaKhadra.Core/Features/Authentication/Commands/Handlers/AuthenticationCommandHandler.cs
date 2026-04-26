@@ -60,6 +60,10 @@ public class AuthenticationCommandHandler : ResponseHandler,
             if (userFromDb is null)
                 return Unauthorized<AuthResult>("Invalid Email or password");
 
+            var isLocked = await _userManager.IsLockedOutAsync(userFromDb);
+            if (isLocked)
+                return Unauthorized<AuthResult>("Your account has been locked. Please contact the administrator for assistance.");
+
             bool isAuthenticated = await _userManager.CheckPasswordAsync(userFromDb, request.Password);
             if (!isAuthenticated)
                 return Unauthorized<AuthResult>("Invalid Email or password");
@@ -102,7 +106,8 @@ public class AuthenticationCommandHandler : ResponseHandler,
 
             if (authResult.Status != ServiceOperationStatus.Succeeded || authResult.Data is null)
             {
-                return authResult.Status switch {
+                return authResult.Status switch
+                {
                     ServiceOperationStatus.Unauthorized => Unauthorized<AuthResult>(authResult.ErrorMessage ?? "Invalid token"),
                     _ => BadRequest<AuthResult>(authResult.ErrorMessage ?? "Something went wrong")
                 };
@@ -142,7 +147,8 @@ public class AuthenticationCommandHandler : ResponseHandler,
     {
         ServiceOperationResult<bool> serviceResult = await _authenticationService.LogoutAsync(request.RefreshToken!);
 
-        return serviceResult.Status switch {
+        return serviceResult.Status switch
+        {
             ServiceOperationStatus.Succeeded => Success(serviceResult.Data),
             ServiceOperationStatus.Unauthorized => Unauthorized<bool>(serviceResult.ErrorMessage ?? "Invalid token"),
             _ => BadRequest<bool>(serviceResult.ErrorMessage ?? "Something went wrong")
@@ -204,7 +210,8 @@ public class AuthenticationCommandHandler : ResponseHandler,
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        return resetResult.Status switch {
+        return resetResult.Status switch
+        {
             ServiceOperationStatus.Succeeded => Success(message: "Password reset successfully."),
             ServiceOperationStatus.NotFound => BadRequest(resetResult.ErrorMessage ?? "Invalid code."),
             _ => BadRequest(resetResult.ErrorMessage ?? "Failed to reset password.")
@@ -224,7 +231,8 @@ public class AuthenticationCommandHandler : ResponseHandler,
 
         if (createCodeResult.Status != ServiceOperationStatus.Succeeded || string.IsNullOrWhiteSpace(createCodeResult.Data))
         {
-            return createCodeResult.Status switch {
+            return createCodeResult.Status switch
+            {
                 ServiceOperationStatus.NotFound => Success(),
                 _ => BadRequest(createCodeResult.ErrorMessage)
             };
@@ -251,7 +259,8 @@ public class AuthenticationCommandHandler : ResponseHandler,
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        return confirmResult.Status switch {
+        return confirmResult.Status switch
+        {
             ServiceOperationStatus.Succeeded => Success(message: "Email confirmed successfully."),
             ServiceOperationStatus.NotFound => BadRequest(confirmResult.ErrorMessage ?? "Invalid code."),
             _ => BadRequest(confirmResult.ErrorMessage ?? "Failed to confirm email.")
