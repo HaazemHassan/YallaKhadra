@@ -35,9 +35,11 @@ namespace YallaKhadra.API
             //    });
             //});
 
-            builder.Services.AddCors(options => {
-                options.AddPolicy("AngularClientPolicy", policy => {
-                    policy.WithOrigins("http://localhost:31000")
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AngularClientPolicy", policy =>
+                {
+                    policy.WithOrigins("http://localhost:4200")
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();
