@@ -16,7 +16,7 @@ namespace YallaKhadra.Core.Features.WasteReports.Queries.Handlers
     public class WasteReportQueryHandler : ResponseHandler,
                                             IRequestHandler<GetWasteReportByIdQuery, Response<WasteReportResponse>>,
                                             IRequestHandler<GetWasteReportsPaginatedQuery, PaginatedResult<WasteReportResponse>>,
-                                            IRequestHandler<GetReportsNearLocationQuery, Response<List<WasteReportResponse>>>,
+                                            IRequestHandler<GetReportsNearLocationQuery, PaginatedResult<WasteReportResponse>>,
                                             IRequestHandler<GetPendingReportsQuery, PaginatedResult<WasteReportResponse>>,
                                             IRequestHandler<GetMyReportsQuery, PaginatedResult<WasteReportBriefDto>>,
                                             IRequestHandler<GetMyWorkQuery, PaginatedResult<MyWorkResponse>>
@@ -117,43 +117,53 @@ namespace YallaKhadra.Core.Features.WasteReports.Queries.Handlers
             }
         }
 
-        public async Task<Response<List<WasteReportResponse>>> Handle(GetReportsNearLocationQuery request, CancellationToken cancellationToken)
+        public async Task<PaginatedResult<WasteReportResponse>> Handle(GetReportsNearLocationQuery request, CancellationToken cancellationToken)
         {
             try
             {
-                // Get all waste reports with related data
+                // Get all pending waste reports with related data
                 var allReports = await _wasteReportRepository
                     .GetTableNoTracking(r => r.Status == ReportStatus.Pending)
                     .Include(r => r.Images)
                     .Include(r => r.User)
                     .ToListAsync(cancellationToken);
 
-                // Filter reports within the specified radius using Haversine formula
+                // Filter reports within the specified radius using Haversine formula and maintain distance order
                 var nearbyReports = allReports
-                    .Where(r =>
+                    .Select(r => new
                     {
-                        var distance = GeoLocationHelper.CalculateDistance(
+                        Report = r,
+                        Distance = GeoLocationHelper.CalculateDistance(
                             request.Latitude,
                             request.Longitude,
                             r.Latitude,
-                            r.Longitude);
-                        return distance <= request.RadiusInKm;
+                            r.Longitude)
                     })
-                    .OrderBy(r => GeoLocationHelper.CalculateDistance(
-                        request.Latitude,
-                        request.Longitude,
-                        r.Latitude,
-                        r.Longitude)) // Sort by distance (nearest first)
+                    .Where(x => x.Distance <= request.RadiusInKm)
+                    .OrderBy(x => x.Distance) // Sort by distance (nearest first)
+                    .Select(x => x.Report)
                     .ToList();
 
-                // Map to response DTOs
-                var response = _mapper.Map<List<WasteReportResponse>>(nearbyReports);
+                // Apply pagination
+                var totalCount = nearbyReports.Count;
+                var pageNumber = Math.Max(1, request.PageNumber);
+                var pageSize = Math.Max(1, request.PageSize);
 
-                return Success(response, message: $"Found {response.Count} reports within {request.RadiusInKm} km.");
+                if (totalCount == 0)
+                    return PaginatedResult<WasteReportResponse>.Success([], totalCount, pageNumber, pageSize);
+
+                var paginatedReports = nearbyReports
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                var mappedReports = _mapper.Map<List<WasteReportResponse>>(paginatedReports);
+
+                return PaginatedResult<WasteReportResponse>.Success(mappedReports, totalCount, pageNumber, pageSize);
             }
             catch (Exception ex)
             {
-                return BadRequest<List<WasteReportResponse>>($"An error occurred: {ex.Message}");
+                return PaginatedResult<WasteReportResponse>.Failure($"An error occurred: {ex.Message}");
             }
         }
 

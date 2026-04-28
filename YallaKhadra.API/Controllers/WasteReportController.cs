@@ -107,19 +107,20 @@ namespace YallaKhadra.API.Controllers {
         /// <summary>
         /// Get waste reports near a specific location within a given radius
         /// </summary>
-        /// <param name="query">Location coordinates (latitude, longitude) and search radius in kilometers</param>
-        /// <returns>List of waste reports within the specified radius, sorted by distance (nearest first)</returns>
-        /// <response code="200">Returns list of nearby waste reports</response>
+        /// <param name="query">Location coordinates (latitude, longitude), search radius in kilometers, and pagination parameters</param>
+        /// <returns>Paginated list of waste reports within the specified radius, sorted by distance (nearest first)</returns>
+        /// <response code="200">Returns paginated list of nearby waste reports</response>
         /// <response code="400">Invalid coordinates or radius</response>
         /// <response code="401">User is not authenticated</response>
         [HttpGet("near")]
-        [ProducesResponseType(typeof(Response<List<WasteReportResponse>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PaginatedResult<WasteReportResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [Authorize(Roles = nameof(UserRole.Worker))]
-        public async Task<IActionResult> GetReportsNearLocation([FromQuery] GetReportsNearLocationQuery query) {
+        public async Task<IActionResult> GetReportsNearLocation([FromQuery] GetReportsNearLocationQuery query)
+        {
             var result = await Mediator.Send(query);
-            return NewResult(result);
+            return Ok(result);
         }
 
         /// <summary>
