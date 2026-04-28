@@ -119,8 +119,8 @@ namespace YallaKhadra.API.Bases.DataSeeding
 
             var locationIndex = 0;
 
-            // Create 10 Pending Reports
-            for (int i = 0; i < 10; i++)
+            // Create 25 Pending Reports
+            for (int i = 0; i < 25; i++)
             {
                 var user = users[i % users.Count];
                 var location = Locations[locationIndex++ % Locations.Length];
@@ -162,8 +162,8 @@ namespace YallaKhadra.API.Bases.DataSeeding
             reports.Add(inProgressReport);
             reportMetadata.Add((inProgressReport, inProgressReportCreatedAt, workerUser.Id, true, null));
 
-            // Create 9 Done Reports - all linked to worker@project.com
-            for (int i = 0; i < 9; i++)
+            // Create 20 Done Reports - all linked to worker@project.com
+            for (int i = 0; i < 20; i++)
             {
                 var user = users[(11 + i) % users.Count];
                 var location = Locations[locationIndex++ % Locations.Length];
