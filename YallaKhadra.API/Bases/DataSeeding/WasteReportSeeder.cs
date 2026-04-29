@@ -96,6 +96,22 @@ namespace YallaKhadra.API.Bases.DataSeeding
             if (workerUser == null)
                 return;
 
+            var userRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == UserRole.User.ToString());
+            if (userRole == null)
+                return;
+
+            var leaderboardUsers = await (
+                from user in context.Users
+                join userRoleMap in context.UserRoles on user.Id equals userRoleMap.UserId
+                where userRoleMap.RoleId == userRole.Id
+                orderby user.Id
+                select user)
+                .Take(15)
+                .ToListAsync();
+
+            if (leaderboardUsers.Count < 15)
+                return;
+
             // Get existing public IDs to avoid duplicates
             var existingReportImagePublicIds = new HashSet<string>(
                 await context.ReportImages
@@ -162,10 +178,10 @@ namespace YallaKhadra.API.Bases.DataSeeding
             reports.Add(inProgressReport);
             reportMetadata.Add((inProgressReport, inProgressReportCreatedAt, workerUser.Id, true, null));
 
-            // Create 20 Done Reports - all linked to worker@project.com
-            for (int i = 0; i < 20; i++)
+            // Create Done Reports for 15 users with role User (leaderboard data)
+            for (int i = 0; i < leaderboardUsers.Count; i++)
             {
-                var user = users[(11 + i) % users.Count];
+                var user = leaderboardUsers[i];
                 var location = Locations[locationIndex++ % Locations.Length];
                 var wasteType = wasteTypes[(11 + i) % wasteTypes.Length];
                 var finalWasteType = finalWasteTypes[i % finalWasteTypes.Length];
