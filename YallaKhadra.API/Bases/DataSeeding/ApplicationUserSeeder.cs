@@ -42,13 +42,19 @@ namespace YallaKhadra.API.Bases.DataSeeding
                 if (existingKeys.Contains(emailKey) || existingKeys.Contains(userNameKey))
                     continue;
 
-                var appUser = new ApplicationUser {
+                var role = Enum.TryParse<UserRole>(user.Role, true, out var parsedRole)
+                    ? parsedRole
+                    : UserRole.User;
+
+                var appUser = new ApplicationUser
+                {
                     Email = user.Email,
                     UserName = user.UserName,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
                     EmailConfirmed = user.EmailConfirmed,
-                    PhoneNumberConfirmed = user.PhoneNumberConfirmed
+                    PhoneNumberConfirmed = user.PhoneNumberConfirmed,
+                    PointsBalance = role == UserRole.User ? 10000 : 0
                 };
 
                 var createResult = await _userManager.CreateAsync(appUser, "12345678");
@@ -58,11 +64,7 @@ namespace YallaKhadra.API.Bases.DataSeeding
                 existingKeys.Add(emailKey);
                 existingKeys.Add(userNameKey);
 
-                var role = Enum.TryParse<UserRole>(user.Role, true, out var parsedRole)
-                    ? parsedRole.ToString()
-                    : UserRole.User.ToString();
-
-                await _userManager.AddToRoleAsync(appUser, role);
+                await _userManager.AddToRoleAsync(appUser, role.ToString());
             }
         }
 

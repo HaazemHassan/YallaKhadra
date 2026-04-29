@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using YallaKhadra.Core.Entities.E_CommerceEntities;
+using YallaKhadra.Core.Enums;
 using YallaKhadra.Infrastructure.Data;
 
 namespace YallaKhadra.API.Bases.DataSeeding {
@@ -41,6 +42,7 @@ namespace YallaKhadra.API.Bases.DataSeeding {
             await SeedCategoriesAsync(context, now);
             await SeedProductsAsync(context, now);
             await SeedProductImagesAsync(context, now);
+            await SeedOrdersForUserAsync(context, now);
         }
 
         private static async Task SeedCategoriesAsync(AppDbContext context, DateTime now) {
@@ -110,6 +112,82 @@ namespace YallaKhadra.API.Bases.DataSeeding {
                 await context.ProductImages.AddRangeAsync(imagesToAdd);
                 await context.SaveChangesAsync();
             }
+        }
+
+        private static async Task SeedOrdersForUserAsync(AppDbContext context, DateTime now) {
+            const string targetEmail = "user@project.com";
+            const string orderSeedNotePrefix = "seed-user@project-order-";
+            const int targetOrdersCount = 20;
+
+            var user = await context.Users
+                .FirstOrDefaultAsync(u => u.Email == targetEmail);
+
+            if (user == null)
+                return;
+
+            var products = await context.Products
+                .Where(p => p.IsActive)
+                .OrderBy(p => p.Id)
+                .Select(p => new { p.Id, p.PointsCost })
+                .ToListAsync();
+
+            if (products.Count == 0)
+                return;
+
+            var seededOrderCount = await context.Orders
+                .Include(o => o.ShippingDetails)
+                .CountAsync(o => o.UserId == user.Id
+                    && o.ShippingDetails.ShippingNotes != null
+                    && o.ShippingDetails.ShippingNotes.StartsWith(orderSeedNotePrefix));
+
+            if (seededOrderCount >= targetOrdersCount)
+                return;
+
+            var statuses = Enum.GetValues<OrderStatus>();
+            var orders = new List<Order>();
+
+            for (int i = seededOrderCount; i < targetOrdersCount; i++) {
+                var itemCount = (i % Math.Min(5, products.Count)) + 1;
+                var orderItems = new List<OrderItem>(itemCount);
+
+                for (int j = 0; j < itemCount; j++) {
+                    var product = products[(i + j) % products.Count];
+                    var quantity = (j % 3) + 1;
+
+                    orderItems.Add(new OrderItem {
+                        ProductId = product.Id,
+                        Quantity = quantity,
+                        UnitPointsAtPurchase = product.PointsCost
+                    });
+                }
+
+                var shippingDetails = new OrderShippingDetails {
+                    FullName = "User Seed",
+                    PhoneNumber = "01000000000",
+                    City = "Cairo",
+                    StreetAddress = $"Seed Street {i + 1}",
+                    BuildingNumber = $"B{i + 1}",
+                    Landmark = "Seeder",
+                    ShippingNotes = $"{orderSeedNotePrefix}{i + 1}"
+                };
+
+                var order = new Order {
+                    UserId = user.Id,
+                    OrderDate = now.AddDays(-(targetOrdersCount - i)),
+                    Status = statuses[i % statuses.Length],
+                    ShippingDetails = shippingDetails,
+                    OrderItems = orderItems,
+                    TotalPoints = orderItems.Sum(oi => oi.Quantity * oi.UnitPointsAtPurchase)
+                };
+
+                orders.Add(order);
+            }
+
+            if (orders.Count == 0)
+                return;
+
+            await context.Orders.AddRangeAsync(orders);
+            await context.SaveChangesAsync();
         }
 
         private static List<Category> GetCategories(DateTime now) {
