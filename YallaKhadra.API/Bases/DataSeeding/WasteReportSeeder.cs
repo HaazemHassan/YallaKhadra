@@ -39,7 +39,17 @@ namespace YallaKhadra.API.Bases.DataSeeding
             ("202 Recycling Center, Giza", 30.0150m, 30.9869m),
             ("303 Green Village, 6th of October", 30.0176m, 30.8129m),
             ("404 Sustainable Boulevard, New Cairo", 29.9891m, 31.4927m),
-            ("505 Clean Avenue, Helwan", 29.8545m, 31.3456m)
+            ("505 Clean Avenue, Helwan", 29.8545m, 31.3456m),
+            ("601 Nearby Lane, Helwan", 29.9559m, 30.9324m),
+            ("602 Nearby Street, Helwan", 29.9546m, 30.9309m),
+            ("603 Nearby Corner, Helwan", 29.9554m, 30.9331m),
+            ("604 Nearby Block, Helwan", 29.9562m, 30.9312m),
+            ("605 Nearby Plaza, Helwan", 29.9549m, 30.9329m),
+            ("606 Nearby Road, Helwan", 29.9558m, 30.9307m),
+            ("607 Nearby Park, Helwan", 29.9551m, 30.9340m),
+            ("608 Nearby Square, Helwan", 29.9543m, 30.9316m),
+            ("609 Nearby Market, Helwan", 29.9565m, 30.9322m),
+            ("610 Nearby Alley, Helwan", 29.9550m, 30.9303m)
         ];
 
         private static readonly string[] ReportDescriptions =
@@ -135,8 +145,8 @@ namespace YallaKhadra.API.Bases.DataSeeding
 
             var locationIndex = 0;
 
-            // Create 25 Pending Reports
-            for (int i = 0; i < 25; i++)
+            // Create 35 Pending Reports
+            for (int i = 0; i < 35; i++)
             {
                 var user = users[i % users.Count];
                 var location = Locations[locationIndex++ % Locations.Length];
