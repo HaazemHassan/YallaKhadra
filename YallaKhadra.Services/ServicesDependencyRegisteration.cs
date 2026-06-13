@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using YallaKhadra.Core.Abstracts.ServicesContracts;
 using YallaKhadra.Core.Bases.Options;
@@ -11,6 +11,7 @@ namespace YallaKhadra.Services {
         public static IServiceCollection ServiceLayerDependencyRegistration(this IServiceCollection services, IConfiguration configuration) {
             services.Configure<MailOptions>(configuration.GetSection(MailOptions.SectionName));
             services.Configure<VerificationCodeOptions>(configuration.GetSection(VerificationCodeOptions.SectionName));
+            services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
 
             services.AddTransient<IApplicationUserService, ApplicationUserService>();
             services.AddTransient<IAuthenticationService, AuthenticationService>();
@@ -28,8 +29,10 @@ namespace YallaKhadra.Services {
             services.AddTransient<IOrderService, OrderService>();
             services.AddTransient<ICloudinaryService, CloudinaryService>();
             services.AddTransient(typeof(IImageService<>), typeof(ImageService<>));
+            services.AddTransient<IGoogleAuthService, GoogleAuthService>();
 
             return services;
         }
     }
 }
+

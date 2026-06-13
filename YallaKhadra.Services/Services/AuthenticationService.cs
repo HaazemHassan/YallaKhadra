@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -13,6 +13,7 @@ using YallaKhadra.Core.Bases;
 using YallaKhadra.Core.Bases.Authentication;
 using YallaKhadra.Core.Entities.IdentityEntities;
 using YallaKhadra.Core.Enums;
+using YallaKhadra.Core.Features.Authentication.Common;
 
 namespace YallaKhadra.Services.Services {
     public class AuthenticationService : IAuthenticationService {
@@ -40,7 +41,7 @@ namespace YallaKhadra.Services.Services {
         }
 
 
-        public async Task<ServiceOperationResult<AuthResult?>> AuthenticateAsync(ApplicationUser user, DateTime? refreshTokenExpDate) {
+        public async Task<ServiceOperationResult<AuthResult?>> AuthenticateAsync(ApplicationUser user, DateTime? refreshTokenExpDate = null) {
             if (user is null)
                 return ServiceOperationResult<AuthResult?>.Failure(ServiceOperationStatus.InvalidParameters, "User cannot be null");
 
@@ -134,6 +135,71 @@ namespace YallaKhadra.Services.Services {
 
         }
 
+
+        public async Task<ServiceOperationResult<AuthResult?>> SignInWithGoogleAsync(GoogleUserInfo googleUser, CancellationToken ct = default) {
+            const string googleProvider = "Google";
+
+            var appUser = await _userManager.FindByLoginAsync(googleProvider, googleUser.GoogleId);
+
+            if (appUser is not null) {
+                appUser = await _userManager.Users
+                    .Include(u => u.ProfileImage)
+                    .FirstOrDefaultAsync(u => u.Id == appUser.Id, ct);
+
+                return await AuthenticateAsync(appUser!);
+            }
+
+            appUser = await _userManager.Users
+                .Include(u => u.ProfileImage)
+                .FirstOrDefaultAsync(u => u.Email == googleUser.Email, ct);
+
+            if (appUser is not null) {
+                var loginInfo = new UserLoginInfo(googleProvider, googleUser.GoogleId, googleProvider);
+                var addLoginResult = await _userManager.AddLoginAsync(appUser, loginInfo);
+
+                if (!addLoginResult.Succeeded) {
+                    return ServiceOperationResult<AuthResult?>.Failure(
+                        ServiceOperationStatus.Failed,
+                        "Failed to link Google account.");
+                }
+
+                if (!appUser.EmailConfirmed && googleUser.IsEmailVerified) {
+                    appUser.EmailConfirmed = true;
+                }
+
+                return await AuthenticateAsync(appUser);
+            }
+
+            return await CreateUserFromGoogleAsync(googleUser, ct);
+        }
+
+        private async Task<ServiceOperationResult<AuthResult?>> CreateUserFromGoogleAsync(GoogleUserInfo googleUser, CancellationToken ct) {
+            const string googleProvider = "Google";
+
+            var appUser = new ApplicationUser {
+                FirstName = googleUser.FirstName,
+                LastName = googleUser.LastName,
+                Email = googleUser.Email,
+                UserName = googleUser.Email,
+                EmailConfirmed = googleUser.IsEmailVerified
+            };
+
+            var createResult = await _userManager.CreateAsync(appUser);
+            if (!createResult.Succeeded) {
+                return ServiceOperationResult<AuthResult?>.Failure(
+                    ServiceOperationStatus.Failed,
+                    "Failed to create user account.");
+            }
+
+            var loginInfo = new UserLoginInfo(googleProvider, googleUser.GoogleId, googleProvider);
+            await _userManager.AddLoginAsync(appUser, loginInfo);
+
+            await _userManager.AddToRoleAsync(appUser, UserRole.User.ToString());
+
+            return await AuthenticateAsync(appUser);
+        }
+
+
         #region Helper functions
         private async Task<JwtSecurityToken> GenerateAccessToken(ApplicationUser user, List<Claim>? claims = null, DateTime? expDate = null) {
             return new JwtSecurityToken(
@@ -226,3 +292,4 @@ namespace YallaKhadra.Services.Services {
 
     }
 }
+

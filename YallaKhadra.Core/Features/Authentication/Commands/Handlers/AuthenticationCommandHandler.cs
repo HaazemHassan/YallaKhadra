@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,12 +11,14 @@ using YallaKhadra.Core.Bases.Responses;
 using YallaKhadra.Core.Entities.IdentityEntities;
 using YallaKhadra.Core.Enums;
 using YallaKhadra.Core.Features.Authentication.Commands.RequestsModels;
+using YallaKhadra.Core.Features.Authentication.Common;
 using YallaKhadra.Core.Features.Users.Queries.Responses;
 
 namespace YallaKhadra.Core.Features.Authentication.Commands.Handlers;
 
 public class AuthenticationCommandHandler : ResponseHandler,
                                                          IRequestHandler<SignInCommand, Response<AuthResult>>,
+                                                         IRequestHandler<SignInWithGoogleCommand, Response<AuthResult>>,
                                                          IRequestHandler<RefreshTokenCommand, Response<AuthResult>>,
                                                          IRequestHandler<LogoutCommand, Response<bool>>,
                                                          IRequestHandler<ChangePasswordCommand, Response>,
@@ -34,9 +36,10 @@ public class AuthenticationCommandHandler : ResponseHandler,
     private readonly IPasswordService _passwordService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IGoogleAuthService _googleAuthService;
 
 
-    public AuthenticationCommandHandler(UserManager<ApplicationUser> userManager, IMapper mapper, IAuthenticationService authenticationService, IEmailVerificationService emailVerificationService, IPasswordService passwordService, ICurrentUserService currentUserService, IUnitOfWork unitOfWork)
+    public AuthenticationCommandHandler(UserManager<ApplicationUser> userManager, IMapper mapper, IAuthenticationService authenticationService, IEmailVerificationService emailVerificationService, IPasswordService passwordService, ICurrentUserService currentUserService, IUnitOfWork unitOfWork, IGoogleAuthService googleAuthService)
     {
         _userManager = userManager;
         _mapper = mapper;
@@ -45,6 +48,7 @@ public class AuthenticationCommandHandler : ResponseHandler,
         _passwordService = passwordService;
         _currentUserService = currentUserService;
         _unitOfWork = unitOfWork;
+        _googleAuthService = googleAuthService;
     }
 
 
@@ -90,6 +94,54 @@ public class AuthenticationCommandHandler : ResponseHandler,
             mappedUser.Roles = parsedRoles;
 
             authResult.Data.User = mappedUser;
+            return Success(authResult.Data);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest<AuthResult>($"An error occurred: {ex.Message}");
+        }
+    }
+
+    public async Task<Response<AuthResult>> Handle(SignInWithGoogleCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var googleUserResult = await _googleAuthService.ValidateIdTokenAsync(request.IdToken, cancellationToken);
+            if (googleUserResult.Status != ServiceOperationStatus.Succeeded || googleUserResult.Data is null)
+            {
+                return googleUserResult.Status switch
+                {
+                    ServiceOperationStatus.Unauthorized => Unauthorized<AuthResult>(googleUserResult.ErrorMessage ?? "Invalid ID token"),
+                    _ => BadRequest<AuthResult>(googleUserResult.ErrorMessage ?? "Invalid Google credentials")
+                };
+            }
+
+            var authResult = await _authenticationService.SignInWithGoogleAsync(googleUserResult.Data, cancellationToken);
+            if (authResult.Status != ServiceOperationStatus.Succeeded || authResult.Data is null)
+                return BadRequest<AuthResult>(authResult.ErrorMessage ?? "Something went wrong");
+
+            var appUser = await _userManager.Users
+                .Include(u => u.ProfileImage)
+                .FirstOrDefaultAsync(u => u.Id == authResult.Data.RefreshToken!.UserId, cancellationToken);
+
+            if (appUser is not null)
+            {
+                var userRoles = await _userManager.GetRolesAsync(appUser);
+                var mappedUser = _mapper.Map<GetUserByIdResponse>(appUser);
+                var parsedRoles = new List<UserRole>();
+
+                foreach (var roleName in userRoles)
+                {
+                    if (Enum.TryParse<UserRole>(roleName, true, out var parsedRole))
+                    {
+                        parsedRoles.Add(parsedRole);
+                    }
+                }
+
+                mappedUser.Roles = parsedRoles;
+                authResult.Data.User = mappedUser;
+            }
+
             return Success(authResult.Data);
         }
         catch (Exception ex)

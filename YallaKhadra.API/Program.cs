@@ -25,21 +25,25 @@ namespace YallaKhadra.API
             //                             "http://localhost:4200",
             //                             "https://localhost:4200",
             //                             "http://localhost:4201",
+            //                             "https://localhost:4201",
+            //                             "http://localhost:9200",
+            //                             "https://localhost:4200",
+            //                             "http://localhost:4201",
             //                             "https://localhost:4201"
             //                         };
 
             //    options.AddPolicy("AngularClientPolicy", policy => {
             //        policy.WithOrigins(allowedOrigins)
             //              .AllowAnyHeader()
-            //              .AllowAnyMethod();
+            //              .AllowAnyMethod()
+            //              .AllowCredentials();
+
             //    });
             //});
 
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AngularClientPolicy", policy =>
-                {
-                    policy.WithOrigins("http://localhost:4200")
+            builder.Services.AddCors(options => {
+                options.AddPolicy("AngularClientPolicy", policy => {
+                    policy.WithOrigins("http://localhost:9200")
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();

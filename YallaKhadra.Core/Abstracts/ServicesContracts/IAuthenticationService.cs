@@ -1,6 +1,7 @@
-﻿using YallaKhadra.Core.Bases;
+using YallaKhadra.Core.Bases;
 using YallaKhadra.Core.Bases.Authentication;
 using YallaKhadra.Core.Entities.IdentityEntities;
+using YallaKhadra.Core.Features.Authentication.Common;
 
 namespace YallaKhadra.Core.Abstracts.ServicesContracts {
     public interface IAuthenticationService {
@@ -8,6 +9,7 @@ namespace YallaKhadra.Core.Abstracts.ServicesContracts {
         public bool ValidateAccessToken(string token, bool validateLifetime = true);
         public Task<ServiceOperationResult<AuthResult?>> ReAuthenticateAsync(string refreshToken, string accessToken);
         public Task<ServiceOperationResult<bool>> LogoutAsync(string refreshToken);
-
+        Task<ServiceOperationResult<AuthResult?>> SignInWithGoogleAsync(GoogleUserInfo googleUser, CancellationToken ct = default);
     }
 }
+

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using YallaKhadra.API.Bases;
@@ -7,6 +7,7 @@ using YallaKhadra.Core.Abstracts.ApiAbstracts;
 using YallaKhadra.Core.Bases.Authentication;
 using YallaKhadra.Core.Bases.Responses;
 using YallaKhadra.Core.Features.Authentication.Commands.RequestsModels;
+using YallaKhadra.Core.Features.Authentication.Common;
 using YallaKhadra.Core.Features.Authentication.Queries.RequestsModels;
 
 namespace YallaKhadra.API.Controllers
@@ -53,6 +54,33 @@ namespace YallaKhadra.API.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
         public async Task<IActionResult> Login([FromBody] SignInCommand command)
+        {
+            var result = await Mediator.Send(command);
+            HandleRefreshToken(result);
+            return NewResult(result);
+        }
+
+
+
+        /// <summary>
+        /// Authenticate a user with a Google ID token
+        /// </summary>
+        /// <param name="command">Google ID token payload</param>
+        /// <returns>JWT access token and user information. Refresh token is stored in HTTP-only cookie</returns>
+        /// <response code="200">Google sign-in successful, returns access token and user details</response>
+        /// <response code="400">Invalid Google ID token</response>
+        /// <response code="401">Google account email is not verified</response>
+        /// <remarks>
+        /// If the Google account email matches an existing user, the Google login is linked to that account.
+        /// If no matching user exists, a new user account is automatically created.
+        /// The refresh token is automatically stored in an HTTP-only cookie named 'refreshToken' for web users only.
+        /// </remarks>
+        [HttpPost("google")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(Response<AuthResult>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> SignInWithGoogle([FromBody] SignInWithGoogleCommand command)
         {
             var result = await Mediator.Send(command);
             HandleRefreshToken(result);

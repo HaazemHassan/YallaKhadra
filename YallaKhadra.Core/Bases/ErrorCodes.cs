@@ -1,4 +1,4 @@
-﻿namespace YallaKhadra.Core.Bases {
+namespace YallaKhadra.Core.Bases {
     public static class ErrorCodes {
 
         public static class Authentication {
@@ -8,6 +8,7 @@
             public const string UserNotFound = "UserNotFound";
             public const string InvalidRefreshToken = "InvalidRefreshToken";
             public const string RefreshTokenExpired = "RefreshTokenExpired";
+            public const string InvalidAccessToken = "InvalidAccessToken";
         }
     }
 }
