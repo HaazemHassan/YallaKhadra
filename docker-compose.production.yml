@@ -62,6 +62,7 @@ services:
       - VerificationCodeOptions__EmailExpireInMinutes=${VERIFICATION_EMAIL_EXPIRE_MINUTES:-15}
       - VerificationCodeOptions__CodeLength=${VERIFICATION_CODE_LENGTH:-6}
       - GoogleAuth__ClientId=${GOOGLE_AUTH_CLIENT_ID}
+      - AISettings__ApiUrl=${AI_API_URL}
     ports:
       - "${API_EXTERNAL_PORT:-44000}:8080"
     depends_on:
