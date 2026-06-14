@@ -31,6 +31,8 @@ namespace YallaKhadra.Services {
             services.AddTransient(typeof(IImageService<>), typeof(ImageService<>));
             services.AddTransient<IGoogleAuthService, GoogleAuthService>();
 
+            services.AddHttpClient();
+
             return services;
         }
     }
