@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -48,6 +48,7 @@ namespace YallaKhadra.API.Extentions
             //EmailServiceConfiguations(services, configuration);
             AutorizationServiceConfiguations(services, configuration);
             RateLimitingDependencyConfigurations(services, configuration);
+            CorsServiceConfigurations(services, configuration);
             return services;
 
         }
@@ -247,6 +248,24 @@ namespace YallaKhadra.API.Extentions
         private static IServiceCollection CloudnServiceConfiguations(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
+            return services;
+        }
+
+        private static IServiceCollection CorsServiceConfigurations(this IServiceCollection services, IConfiguration configuration)
+        {
+            var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AngularClientPolicy", policy =>
+                {
+                    policy.WithOrigins(allowedOrigins)
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+            });
+
             return services;
         }
     }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using YallaKhadra.Core.Abstracts.ServicesContracts;
 using YallaKhadra.Core.Entities.BaseEntities;
 using YallaKhadra.Core.Entities.E_CommerceEntities;
@@ -70,6 +71,17 @@ namespace YallaKhadra.Services.Services {
         }
 
         public async Task DeleteAsync(T image) {
+            if (image is UserProfileImage userProfileImage) {
+                var user = await _context.Set<ApplicationUser>()
+                    .FirstOrDefaultAsync(u => u.Id == userProfileImage.UserId);
+
+                if (user is not null && user.ProfileImageId == image.Id) {
+                    user.ProfileImageId = null;
+                    user.ProfileImage = null;
+                    await _context.SaveChangesAsync();
+                }
+            }
+
             await _cloudinary.DeleteAsync(image.PublicId);
             _context.Set<T>().Remove(image);
             await _context.SaveChangesAsync();

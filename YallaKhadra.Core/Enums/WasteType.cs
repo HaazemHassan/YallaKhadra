@@ -2,17 +2,19 @@
 {
     public enum WasteType
     {
-        Unknown = 0,
+        Battery = 0,
 
-        Plastic = 1,
-        Paper = 2,
-        Glass = 3,
-        Metal = 4,
-        Organic = 5,
-        Electronic = 6,  
-        Construction = 9,    // Rubble, bricks
-        Textile = 10,
-        Mixed = 11           // Mixed waste
+        Brown_Glass = 1,
+        Clothes = 2,
+        Bilogical = 3,
+        Green_Glass = 4,
+        Paper = 5,
+        Trash = 6,
+        Shoes = 7,
+        White_Glass = 8,
+        Metal = 9,
+        Cardboard = 10,
+        Plastic = 11
     }
 
 }

@@ -15,7 +15,7 @@ namespace YallaKhadra.Core.Entities.E_CommerceEntities {
             var existingItem = Items.FirstOrDefault(ci => ci.ProductId == product.Id);
 
             if (existingItem is not null) {
-                existingItem.Quantity += quantity;
+                existingItem.Quantity = quantity;
                 existingItem.PointsCost = product.PointsCost;
             }
             else {

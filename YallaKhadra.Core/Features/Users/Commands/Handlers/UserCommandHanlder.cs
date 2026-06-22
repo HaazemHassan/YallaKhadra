@@ -64,7 +64,7 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
                 }
 
                 if (request.ProfileImage != null && request.ProfileImage.Length > 0) {
-                    uploadedImage = await _imageService.UploadWithoutSaveAsync(
+                    uploadedImage = await _imageService.UploadAsync(
                         request.ProfileImage,
                         user.Id,
                         user.Id,

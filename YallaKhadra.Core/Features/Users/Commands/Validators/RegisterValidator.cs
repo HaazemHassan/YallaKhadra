@@ -1,13 +1,17 @@
 ﻿using FluentValidation;
 using YallaKhadra.Core.Features.Users.Commands.RequestModels;
 
-namespace YallaKhadra.Core.Features.Users.Commands.Validators {
-    public class RegisterValidator : AbstractValidator<RegisterCommand> {
+namespace YallaKhadra.Core.Features.Users.Commands.Validators
+{
+    public class RegisterValidator : AbstractValidator<RegisterCommand>
+    {
 
-        public RegisterValidator() {
+        public RegisterValidator()
+        {
             ApplyValidaionRules();
         }
-        public void ApplyValidaionRules() {
+        public void ApplyValidaionRules()
+        {
             RuleFor(x => x.FirstName)
                 .NotEmpty().WithMessage("{PropertyName} can't be empty")
                 .NotNull().WithMessage("{PropertyName} can't be null")
@@ -44,6 +48,7 @@ namespace YallaKhadra.Core.Features.Users.Commands.Validators {
                 .Equal(x => x.Password).WithMessage("Password does not match");
 
             RuleFor(x => x.PhoneNumber)
+                .NotEmpty().WithMessage("{PropertyName} is required.")
                 .Matches(expression: @"^\+?[0-9]\d{1,14}$")
                 .WithMessage("Phone number is not valid.");
 

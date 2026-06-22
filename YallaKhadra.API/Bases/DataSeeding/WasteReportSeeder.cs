@@ -140,8 +140,32 @@ namespace YallaKhadra.API.Bases.DataSeeding
             var reports = new List<WasteReport>();
             var reportMetadata = new List<(WasteReport Report, DateTime CreatedAt, int? WorkerId, bool HasCleanupTask, WasteType? FinalWasteType)>();
 
-            var wasteTypes = new[] { WasteType.Plastic, WasteType.Paper, WasteType.Glass, WasteType.Metal, WasteType.Organic, WasteType.Electronic, WasteType.Construction, WasteType.Textile, WasteType.Mixed };
-            var finalWasteTypes = new[] { WasteType.Plastic, WasteType.Paper, WasteType.Glass, WasteType.Metal, WasteType.Organic };
+            var wasteTypes = new[]
+            {
+                WasteType.Plastic,
+                WasteType.Paper,
+                WasteType.Brown_Glass,
+                WasteType.Green_Glass,
+                WasteType.White_Glass,
+                WasteType.Metal,
+                WasteType.Cardboard,
+                WasteType.Bilogical,
+                WasteType.Clothes,
+                WasteType.Shoes,
+                WasteType.Trash,
+                WasteType.Battery
+            };
+            var finalWasteTypes = new[]
+            {
+                WasteType.Plastic,
+                WasteType.Paper,
+                WasteType.Brown_Glass,
+                WasteType.Green_Glass,
+                WasteType.White_Glass,
+                WasteType.Metal,
+                WasteType.Cardboard,
+                WasteType.Clothes
+            };
 
             var locationIndex = 0;
 
@@ -209,7 +233,7 @@ namespace YallaKhadra.API.Bases.DataSeeding
                 };
 
                 reports.Add(report);
-                reportMetadata.Add((report, reportCreatedAt, workerUser.Id, true, finalWasteType));
+                reportMetadata.Add((report, reportCreatedAt, workerUser.Id, true, (WasteType?)finalWasteType));
             }
 
             // Save all reports to get their IDs

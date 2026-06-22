@@ -19,39 +19,6 @@ namespace YallaKhadra.API
 
             builder.Services.AddControllers();
             builder.Services.DependenciesRegistration(builder.Configuration);
-            //builder.Services.AddCors(options => {
-            //    var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-            //                         ?? new[] {
-            //                             "http://localhost:4200",
-            //                             "https://localhost:4200",
-            //                             "http://localhost:4201",
-            //                             "https://localhost:4201",
-            //                             "http://localhost:9200",
-            //                             "https://localhost:4200",
-            //                             "http://localhost:4201",
-            //                             "https://localhost:4201"
-            //                         };
-
-            //    options.AddPolicy("AngularClientPolicy", policy => {
-            //        policy.WithOrigins(allowedOrigins)
-            //              .AllowAnyHeader()
-            //              .AllowAnyMethod()
-            //              .AllowCredentials();
-
-            //    });
-            //});
-
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AngularClientPolicy", policy =>
-                {
-                    policy.WithOrigins("http://localhost:4200")
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials();
-                });
-            });
-
 
             var app = builder.Build();
 
@@ -61,7 +28,7 @@ namespace YallaKhadra.API
 
                 var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                // needed to dockerize the application and have the DB created automatically       
+                // needed to dockerize the application and have the DB created automatically
                 if (app.Environment.IsDevelopment())
                 {
                     try
@@ -78,7 +45,6 @@ namespace YallaKhadra.API
                         throw;
                     }
                 }
-                //
 
 
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -92,15 +58,14 @@ namespace YallaKhadra.API
             }
             #endregion
 
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
 
-                app.UseSwaggerUI();
+            app.UseSwagger();
 
-                var dashboardPath = app.Configuration["HangfireSettings:DashboardPath"] ?? "/jobs";
-                app.UseHangfireDashboard(dashboardPath);
-            }
+            app.UseSwaggerUI();
+
+            var dashboardPath = app.Configuration["HangfireSettings:DashboardPath"] ?? "/jobs";
+            app.UseHangfireDashboard(dashboardPath);
+
 
             app.UseCors("AngularClientPolicy");
 
