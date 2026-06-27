@@ -123,8 +123,6 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
                     };
                 }
 
-
-
                 var role = request.UserRole;
                 if (_currentUserService.IsInRole(UserRole.Admin)) {
                     if (role == UserRole.SuperAdmin ||
@@ -142,13 +140,24 @@ namespace YallaKhadra.Core.Features.Users.Commands.Handlers {
                     return BadRequest<AddUserResponse>("Failed to assign user to role");
                 }
 
-                var createCodeResult = await _emailVerificationService.CreateEmailConfirmationCodeAsync(addedUser.Id);
-                if (createCodeResult.Status != ServiceOperationStatus.Succeeded || string.IsNullOrWhiteSpace(createCodeResult.Data)) {
-                    await _unitOfWork.RollbackAsync();
-                    return BadRequest<AddUserResponse>(createCodeResult.ErrorMessage ?? "Failed to create email confirmation code.");
+                // Auto-confirm email for Worker role, require confirmation for others
+                if (role == UserRole.Worker) {
+                    addedUser.EmailConfirmed = true;
+                    var updateResult = await _userManager.UpdateAsync(addedUser);
+                    if (!updateResult.Succeeded) {
+                        await _unitOfWork.RollbackAsync();
+                        return BadRequest<AddUserResponse>("Failed to confirm email for worker.");
+                    }
                 }
+                else {
+                    var createCodeResult = await _emailVerificationService.CreateEmailConfirmationCodeAsync(addedUser.Id);
+                    if (createCodeResult.Status != ServiceOperationStatus.Succeeded || string.IsNullOrWhiteSpace(createCodeResult.Data)) {
+                        await _unitOfWork.RollbackAsync();
+                        return BadRequest<AddUserResponse>(createCodeResult.ErrorMessage ?? "Failed to create email confirmation code.");
+                    }
 
-                await _emailVerificationService.SendConfirmationEmailAsync(addedUser, createCodeResult.Data);
+                    await _emailVerificationService.SendConfirmationEmailAsync(addedUser, createCodeResult.Data);
+                }
 
                 // Reload user with ProfileImage
                 var userWithImage = await _userManager.Users

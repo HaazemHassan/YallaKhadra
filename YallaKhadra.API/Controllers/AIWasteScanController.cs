@@ -7,12 +7,14 @@ using YallaKhadra.Core.Features.AIWasteScans.Commands.RequestModels;
 using YallaKhadra.Core.Features.AIWasteScans.Queries.Models;
 using YallaKhadra.Core.Features.AIWasteScans.Queries.Responses;
 
-namespace YallaKhadra.API.Controllers {
+namespace YallaKhadra.API.Controllers
+{
     /// <summary>
     /// AI Waste Scan controller for waste identification using AI
     /// </summary>
     [Authorize]
-    public class AIWasteScanController : BaseController {
+    public class AIWasteScanController : BaseController
+    {
 
         /// <summary>
         /// Create a new AI waste scan by uploading an image
@@ -27,7 +29,8 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(typeof(Response<AIWasteScanResponse>), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> CreateAIWasteScan([FromForm] CreateAIWasteScanCommand command) {
+        public async Task<IActionResult> CreateAIWasteScan([FromForm] CreateAIWasteScanCommand command)
+        {
             var result = await Mediator.Send(command);
             return NewResult(result);
         }
@@ -41,11 +44,12 @@ namespace YallaKhadra.API.Controllers {
         /// <response code="404">Scan not found or access denied</response>
         /// <response code="401">User is not authenticated</response>
         [HttpGet("{id:int}")]
-        [Authorize(Roles = $"{nameof(UserRole.User)},{nameof(UserRole.SuperAdmin)},{nameof(UserRole.Admin)}")]
+        [Authorize(Roles = $"{nameof(UserRole.User)},{nameof(UserRole.Worker)},{nameof(UserRole.SuperAdmin)},{nameof(UserRole.Admin)}")]
         [ProducesResponseType(typeof(Response<AIWasteScanResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> GetAIWasteScanById([FromRoute] int id) {
+        public async Task<IActionResult> GetAIWasteScanById([FromRoute] int id)
+        {
             var query = new GetAIWasteScanByIdQuery { Id = id };
             var result = await Mediator.Send(query);
             return NewResult(result);
@@ -60,7 +64,8 @@ namespace YallaKhadra.API.Controllers {
         [HttpGet("my")]
         [ProducesResponseType(typeof(Response<List<AIWasteScanResponse>>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> GetMyAIWasteScans() {
+        public async Task<IActionResult> GetMyAIWasteScans()
+        {
             var query = new GetMyAIWasteScansQuery();
             var result = await Mediator.Send(query);
             return NewResult(result);
@@ -79,7 +84,8 @@ namespace YallaKhadra.API.Controllers {
         [ProducesResponseType(typeof(PaginatedResult<AIWasteScanResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> GetAllAIWasteScans([FromQuery] GetAllAIWasteScansQuery query) {
+        public async Task<IActionResult> GetAllAIWasteScans([FromQuery] GetAllAIWasteScansQuery query)
+        {
             var result = await Mediator.Send(query);
             return Ok(result);
         }
