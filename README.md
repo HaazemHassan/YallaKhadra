@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌿 Yalla Khadra | يلا خضرا
+# 🌿 Yalla Khadra | يلا خضرة
 
 ### AI-Powered Smart Waste Management & Recycling Platform
 
